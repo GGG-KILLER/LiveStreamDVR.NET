@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Models;
+using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
@@ -22,6 +23,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
+builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {
     var twitchOptions = builder.Configuration.GetRequiredSection(TwitchOptions.ConfigurationKey).Get<TwitchOptions>()!;
@@ -29,13 +31,14 @@ builder.Services.AddTwitchLibEventSubWebhooks(opts =>
     opts.CallbackPath = "/hook/twitch";
     opts.Secret = twitchOptions.WebhookSecret!;
 });
-
 builder.Services.AddSingleton(Channel.CreateUnbounded<TwitchStream>(new UnboundedChannelOptions
 {
     AllowSynchronousContinuations = false,
     SingleReader = true,
     SingleWriter = false,
 }));
+builder.Services.AddHostedService<TwitchEventSubService>();
+builder.Services.AddHostedService<TwitchStreamCapturer>();
 
 var app = builder.Build();
 
