@@ -7,6 +7,8 @@ using TwitchLib.EventSub.Webhooks.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddEnvironmentVariables(prefix: "DVR_");
+
 // Add services to the container.
 
 builder.Services.Configure<BasicOptions>(builder.Configuration.GetSection(BasicOptions.ConfigurationKey));
