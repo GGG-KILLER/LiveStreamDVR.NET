@@ -1,5 +1,3 @@
-
-
 using System.Diagnostics;
 using System.Threading.Channels;
 using LiveStreamDVR.Api.Configuration;
@@ -10,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace LiveStreamDVR.Api.Services;
 
 public sealed class TwitchStreamCapturer(
-    ServiceProvider serviceProvider,
+    IServiceProvider serviceProvider,
     Channel<TwitchStream> streams,
     IOptionsMonitor<BinariesOptions> binariesOptionsMonitor,
     IOptionsMonitor<CaptureOptions> captureOptionsMonitor) : BackgroundService

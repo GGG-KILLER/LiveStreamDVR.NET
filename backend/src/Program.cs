@@ -23,6 +23,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {
