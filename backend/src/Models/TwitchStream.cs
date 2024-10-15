@@ -1,0 +1,29 @@
+namespace LiveStreamDVR.Api.Models;
+
+public sealed record TwitchStream
+{
+    /// <summary>
+    /// The id of the stream.
+    /// </summary>
+    public string? Id { get; init; }
+
+    /// <summary>
+    /// The broadcaster's user display name.
+    /// </summary>
+    public required string UserName { get; init; }
+
+    /// <summary>
+    /// The broadcaster's user login.
+    /// </summary>
+    public required string Login { get; init; }
+
+    /// <summary>
+    /// The channel’s stream title.
+    /// </summary>
+    public required string Title { get; init; }
+
+    /// <summary>
+    /// The timestamp at which the stream went online at.
+    /// </summary>
+    public DateTimeOffset? StartedAt { get; init; }
+}

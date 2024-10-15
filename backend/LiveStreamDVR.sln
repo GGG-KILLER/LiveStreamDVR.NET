@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveStreamDVR.Api", "src\LiveStreamDVR.Api.csproj", "{63696FC2-D3AE-42B8-A0EE-6011230180D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveStreamDVR.Api.Tests", "test\LiveStreamDVR.Api.Tests.csproj", "{8EBB3649-CD11-4D42-B5DC-009ED38B67A0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63696FC2-D3AE-42B8-A0EE-6011230180D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63696FC2-D3AE-42B8-A0EE-6011230180D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63696FC2-D3AE-42B8-A0EE-6011230180D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63696FC2-D3AE-42B8-A0EE-6011230180D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EBB3649-CD11-4D42-B5DC-009ED38B67A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EBB3649-CD11-4D42-B5DC-009ED38B67A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EBB3649-CD11-4D42-B5DC-009ED38B67A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EBB3649-CD11-4D42-B5DC-009ED38B67A0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
