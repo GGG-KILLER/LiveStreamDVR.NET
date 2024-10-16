@@ -128,7 +128,7 @@ public sealed class TwitchStreamCapturer(
                     streamlinkStderr.Flush();
                 };
                 await streamlinkEx.StartAndWaitAsync(cancellationToken);
-                if (streamlink.ExitCode != 1)
+                if (streamlink.ExitCode != 0)
                 {
                     logger.LogError("Failed to capture stream {Stream}. Exit code was {ExitCode}.", stream, streamlink.ExitCode);
                     return;
