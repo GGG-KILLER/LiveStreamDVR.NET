@@ -55,6 +55,18 @@ public sealed class TwitchStreamCapturer(
             Directory.CreateDirectory("logs");
 
             var outputDir = Path.Combine(captureOptions.OutputDirectory!, PathEx.SanitizeFileName(stream.UserName));
+            var outputDirInfo = new DirectoryInfo(outputDir);
+            if (!outputDirInfo.Exists)
+            {
+                outputDirInfo.Create();
+            }
+            if (OperatingSystem.IsLinux())
+            {
+                outputDirInfo.UnixFileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                                           | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+                                           | UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
+            }
+
             Directory.CreateDirectory(outputDir);
             var outputFileTs = Path.Combine(outputDir, PathEx.SanitizeFileName($"{DateTime.Now:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].ts"));
             var outputFileMp4 = Path.Combine(outputDir, PathEx.SanitizeFileName($"{DateTime.Now:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].mp4"));
@@ -98,8 +110,16 @@ public sealed class TwitchStreamCapturer(
                 streamlinkStderr.WriteLine(streamlinkCommandLine);
 
                 var streamlinkEx = new ProcessEx(streamlink);
-                streamlinkEx.OnStandardOutputLine += (_, line) => streamlinkStdout.WriteLine(line);
-                streamlinkEx.OnStandardErrorLine += (_, line) => streamlinkStderr.WriteLine(line);
+                streamlinkEx.OnStandardOutputLine += (_, line) =>
+                {
+                    streamlinkStdout.WriteLine(line);
+                    streamlinkStdout.Flush();
+                };
+                streamlinkEx.OnStandardErrorLine += (_, line) =>
+                {
+                    streamlinkStderr.WriteLine(line);
+                    streamlinkStderr.Flush();
+                };
                 await streamlinkEx.StartAndWaitAsync(cancellationToken);
                 if (streamlink.ExitCode != 1)
                 {
@@ -139,9 +159,26 @@ public sealed class TwitchStreamCapturer(
                 ffmpegStderr.WriteLine($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
 
                 var ffmpegEx = new ProcessEx(ffmpeg);
-                ffmpegEx.OnStandardOutputLine += (_, line) => ffmpegStdout.WriteLine(line);
-                ffmpegEx.OnStandardErrorLine += (_, line) => ffmpegStderr.WriteLine(line);
+                ffmpegEx.OnStandardOutputLine += (_, line) =>
+                {
+                    ffmpegStdout.WriteLine(line);
+                    ffmpegStdout.Flush();
+                };
+                ffmpegEx.OnStandardErrorLine += (_, line) =>
+                {
+                    ffmpegStderr.WriteLine(line);
+                    ffmpegStderr.Flush();
+                };
                 await ffmpegEx.StartAndWaitAsync(cancellationToken);
+
+                if (File.Exists(outputFileMp4) && OperatingSystem.IsLinux())
+                {
+                    File.SetUnixFileMode(
+                        outputFileMp4,
+                        UnixFileMode.UserRead | UnixFileMode.UserWrite
+                        | UnixFileMode.GroupRead | UnixFileMode.GroupWrite
+                        | UnixFileMode.OtherRead);
+                }
 
                 if (ffmpeg.ExitCode != 0)
                 {
