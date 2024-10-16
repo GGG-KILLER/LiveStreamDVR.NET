@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 namespace LiveStreamDVR.Api.Services;
 
 public sealed class TwitchStreamCapturer(
+    ILogger<TwitchStreamCapturer> logger,
     IServiceProvider serviceProvider,
     Channel<TwitchStream> streams,
     IOptionsMonitor<BinariesOptions> binariesOptionsMonitor,
@@ -27,15 +28,14 @@ public sealed class TwitchStreamCapturer(
 
     private async Task Capture(TwitchStream stream, CancellationToken cancellationToken = default)
     {
-        var binariesOptions = binariesOptionsMonitor.CurrentValue;
-        var captureOptions = captureOptionsMonitor.CurrentValue;
-
-        await using var scope = serviceProvider.CreateAsyncScope();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<TwitchStreamCapturer>>();
-        using var _1 = logger.BeginScope("Capture of Stream: {Stream}", stream);
-
         try
         {
+            var binariesOptions = binariesOptionsMonitor.CurrentValue;
+        var captureOptions = captureOptionsMonitor.CurrentValue;
+
+            await using var scope = serviceProvider.CreateAsyncScope();
+            using var _1 = logger.BeginScope("Capture of Stream: {Stream}", stream);
+
             Directory.CreateDirectory("logs");
 
             var outputDir = Path.Combine(captureOptions.OutputDirectory!, PathEx.SanitizeFileName(stream.UserName));
