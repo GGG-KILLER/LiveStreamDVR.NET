@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Channels;
 using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Helpers;
@@ -93,7 +94,13 @@ public sealed class TwitchStreamCapturer(
                             "-o", outputFileTs,
                             "--url", $"https://twitch.tv/{stream.Login}",
                             "--default-stream", "1080p60,best"
-                        }
+                        },
+                        UseShellExecute = false,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                        StandardErrorEncoding = Encoding.UTF8,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        WorkingDirectory = outputDir,
                     }
                 };
                 if (captureOptions.ExtraStreamlinkFlags is not null && captureOptions.ExtraStreamlinkFlags.Length != 0)
@@ -142,7 +149,13 @@ public sealed class TwitchStreamCapturer(
                             "-bsf:a", "aac_adtstoasc",
                             "-movflags", "faststart",
                             outputFileMp4
-                        }
+                        },
+                        UseShellExecute = false,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                        StandardErrorEncoding = Encoding.UTF8,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        WorkingDirectory = outputDir,
                     }
                 };
                 if (captureOptions.ExtraFfmpegFlags is not null && captureOptions.ExtraFfmpegFlags.Length != 0)
