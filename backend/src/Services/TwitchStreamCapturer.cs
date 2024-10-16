@@ -69,8 +69,8 @@ public sealed class TwitchStreamCapturer(
             }
 
             Directory.CreateDirectory(outputDir);
-            var outputFileTs = Path.Combine(outputDir, PathEx.SanitizeFileName($"{DateTime.Now:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].ts"));
-            var outputFileMp4 = Path.Combine(outputDir, PathEx.SanitizeFileName($"{DateTime.Now:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].mp4"));
+            var outputFileTs = Path.Combine(outputDir, PathEx.SanitizeFileName($"{stream.StartedAt:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].ts"));
+            var outputFileMp4 = Path.Combine(outputDir, PathEx.SanitizeFileName($"{stream.StartedAt:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].mp4"));
 
             {
                 logger.LogInformation("Capturing stream {Stream}", stream);
