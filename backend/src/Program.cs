@@ -3,6 +3,7 @@ using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Models;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
 
@@ -43,9 +44,15 @@ builder.Services.AddHostedService<TwitchStreamCapturer>();
 
 var app = builder.Build();
 
+var basicSettings = app.Services.GetRequiredService<IOptionsSnapshot<BasicOptions>>();
+
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
-app.MapScalarApiReference();
+app.MapScalarApiReference(opts =>
+{
+    if (!string.IsNullOrWhiteSpace(basicSettings.Value.PathPrefix))
+        opts.WithOpenApiRoutePattern($"{basicSettings.Value.PathPrefix.TrimEnd('/')}/openapi/{{documentName}}.json");
+});
 
 app.UseHttpsRedirection();
 
