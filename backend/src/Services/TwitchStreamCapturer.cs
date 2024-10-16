@@ -19,12 +19,16 @@ public sealed class TwitchStreamCapturer(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("TwitchStreamCapturer started with channel {Hash}.", $"{streams.GetHashCode():X4}");
-        while (stoppingToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 logger.LogInformation("Waiting for stream to start to capture...");
                 var stream = await streams.Reader.ReadAsync(stoppingToken);
+
+                logger.LogInformation("Cleaning up completed captures...");
+                _capturesInProgress.RemoveAll(task => task.IsCompleted);
+
                 logger.LogInformation("Starting to capture {Stream}", stream);
                 _capturesInProgress.Add(Capture(stream, stoppingToken));
             }
@@ -33,6 +37,9 @@ public sealed class TwitchStreamCapturer(
                 logger.LogError(ex, "Error processing stream capture.");
             }
         }
+        logger.LogInformation("TwitchStreamCapturer shutting down...");
+        await Task.WhenAll(_capturesInProgress);
+        logger.LogInformation("Captures finished.");
     }
 
     private async Task Capture(TwitchStream stream, CancellationToken cancellationToken = default)
