@@ -14,15 +14,24 @@ public sealed class TwitchStreamCapturer(
     IOptionsMonitor<BinariesOptions> binariesOptionsMonitor,
     IOptionsMonitor<CaptureOptions> captureOptionsMonitor) : BackgroundService
 {
-    private readonly Channel<TwitchStream> _streams = streams ?? throw new ArgumentNullException(nameof(streams));
     private readonly List<Task> _capturesInProgress = [];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation("TwitchStreamCapturer started with channel {Hash}.", $"{streams.GetHashCode():X4}");
         while (stoppingToken.IsCancellationRequested)
         {
-            var stream = await _streams.Reader.ReadAsync(stoppingToken);
-            _capturesInProgress.Add(Capture(stream, stoppingToken));
+            try
+            {
+                logger.LogInformation("Waiting for stream to start to capture...");
+                var stream = await streams.Reader.ReadAsync(stoppingToken);
+                logger.LogInformation("Starting to capture {Stream}", stream);
+                _capturesInProgress.Add(Capture(stream, stoppingToken));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing stream capture.");
+            }
         }
     }
 
@@ -31,7 +40,7 @@ public sealed class TwitchStreamCapturer(
         try
         {
             var binariesOptions = binariesOptionsMonitor.CurrentValue;
-        var captureOptions = captureOptionsMonitor.CurrentValue;
+            var captureOptions = captureOptionsMonitor.CurrentValue;
 
             await using var scope = serviceProvider.CreateAsyncScope();
             using var _1 = logger.BeginScope("Capture of Stream: {Stream}", stream);

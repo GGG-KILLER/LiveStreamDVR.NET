@@ -44,14 +44,16 @@ builder.Services.AddHostedService<TwitchStreamCapturer>();
 
 var app = builder.Build();
 
-var basicSettings = app.Services.GetRequiredService<IOptionsSnapshot<BasicOptions>>();
-
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
 app.MapScalarApiReference(opts =>
 {
+    using var scope = app.Services.CreateAsyncScope();
+    var basicSettings = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<BasicOptions>>();
     if (!string.IsNullOrWhiteSpace(basicSettings.Value.PathPrefix))
+    {
         opts.WithOpenApiRoutePattern($"{basicSettings.Value.PathPrefix.TrimEnd('/')}/openapi/{{documentName}}.json");
+    }
 });
 
 app.UseHttpsRedirection();
