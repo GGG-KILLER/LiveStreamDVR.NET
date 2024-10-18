@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Models;
+using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,15 @@ builder.Configuration.AddEnvironmentVariables(prefix: "DVR_");
 
 // Add services to the container.
 
-builder.Services.Configure<BasicOptions>(builder.Configuration.GetSection(BasicOptions.ConfigurationKey));
+var basicSection = builder.Configuration.GetSection(BasicOptions.ConfigurationKey);
+var basicOptions = basicSection.Get<BasicOptions>();
+
+if (basicOptions is null)
+{
+    throw new InvalidOperationException("Missing Basic key on settings.");
+}
+
+builder.Services.Configure<BasicOptions>(basicSection);
 builder.Services.Configure<BinariesOptions>(builder.Configuration.GetSection(BinariesOptions.ConfigurationKey));
 builder.Services.Configure<CaptureOptions>(builder.Configuration.GetSection(CaptureOptions.ConfigurationKey));
 builder.Services.Configure<DiscordOptions>(builder.Configuration.GetSection(DiscordOptions.ConfigurationKey));
@@ -21,7 +30,22 @@ builder.Services.Configure<TwitchOptions>(builder.Configuration.GetSection(Twitc
 builder.Services.Configure<YoutubeOptions>(builder.Configuration.GetSection(YoutubeOptions.ConfigurationKey));
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(opts =>
+{
+    if (!string.IsNullOrWhiteSpace(basicOptions.PathPrefix))
+    {
+        opts.AddDocumentTransformer((document, context, cancellationToken) =>
+        {
+            foreach (var server in document.Servers)
+            {
+                server.Url = $"{server.Url.TrimEnd('/')}/{basicOptions.PathPrefix.TrimStart('/')}";
+            }
+
+            return Task.CompletedTask;
+        });
+    }
+    opts.AddDocumentTransformer<AddOauthSecuritySchemeTransformer>();
+});
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
 builder.Services.AddHttpClient();
@@ -48,11 +72,10 @@ var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference(opts =>
 {
-    using var scope = app.Services.CreateAsyncScope();
-    var basicSettings = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<BasicOptions>>();
-    if (!string.IsNullOrWhiteSpace(basicSettings.Value.PathPrefix))
+    opts.WithPreferredScheme("Bearer");
+    if (!string.IsNullOrWhiteSpace(basicOptions.PathPrefix))
     {
-        opts.WithOpenApiRoutePattern($"{basicSettings.Value.PathPrefix.TrimEnd('/')}/openapi/{{documentName}}.json");
+        opts.WithOpenApiRoutePattern($"{basicOptions.PathPrefix.TrimEnd('/')}/openapi/{{documentName}}.json");
     }
 });
 
