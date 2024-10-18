@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0-rc.1.24452.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0-rc.1.24452.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.11.20" />
     <PackageReference Include="Scalar.AspNetCore" Version="1.2.9" />
     <PackageReference Include="TwitchLib.EventSub.Webhooks" Version="2.3.0" />
   </ItemGroup>

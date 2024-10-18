@@ -49,6 +49,14 @@ builder.Services.AddOpenApi(opts =>
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("TwitchOauth", client =>
+{
+    client.BaseAddress = new Uri("https://id.twitch.tv/oauth2/");
+});
+builder.Services.AddHttpClient("TwitchHelix", client =>
+{
+    client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
+});
 builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {

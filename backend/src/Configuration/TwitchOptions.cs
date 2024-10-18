@@ -4,7 +4,7 @@ public sealed class TwitchOptions
 {
     public const string ConfigurationKey = "Twitch";
 
-    public string? ClientId { get; set; }
-    public string? ClientSecret { get; set; }
-    public string? WebhookSecret { get; set; }
+    public required string ClientId { get; set; }
+    public required string ClientSecret { get; set; }
+    public required string WebhookSecret { get; set; }
 }
