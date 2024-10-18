@@ -6,5 +6,4 @@ public sealed class BasicOptions
 
     public string? PublicUri { get; set; }
     public string? PathPrefix { get; set; }
-    public string? ApiKey { get; set; }
 }
