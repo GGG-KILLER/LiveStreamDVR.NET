@@ -14,20 +14,12 @@ if [ -z "$AUTHENTIK_CLIENT_ID" ]; then
     exit 1
 fi
 
-response=$(
-    oauth2c 'https://sso.shiro.lan/application/o/livestreamdvr/' \
-        --client-id "$AUTHENTIK_CLIENT_ID" \
-        --response-types code \
-        --response-mode query \
-        --grant-type authorization_code \
-        --auth-method none \
-        --scopes openid,email \
-        --pkce
-)
-echo "Obtained response from OAuth 2.0: $response"
-
-AUTHENTIK_ACCESS_TOKEN=$(jq --raw-output '.access_token' <<<"$response")
-
-curl -X POST 'https://sso.shiro.lan/application/o/revoke/' \
-    -H 'Content-Type: application/x-www-form-urlencoded' \
-    -d "client_id=$AUTHENTIK_CLIENT_ID&token=$AUTHENTIK_ACCESS_TOKEN"
+oauth2c 'https://sso.shiro.lan/application/o/livestreamdvr/' \
+    --client-id "$AUTHENTIK_CLIENT_ID" \
+    --response-types code \
+    --response-mode query \
+    --grant-type authorization_code \
+    --auth-method none \
+    --scopes openid,profile \
+    --pkce \
+    --silent | jq --raw-output '.access_token'
