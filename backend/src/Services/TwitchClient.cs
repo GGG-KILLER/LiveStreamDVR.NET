@@ -2,7 +2,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using LiveStreamDVR.Api.Configuration;
+using LiveStreamDVR.Api.Exceptions;
 using LiveStreamDVR.Api.Models;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Threading;
 
@@ -130,14 +132,122 @@ public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsM
         return true;
     }
 
-    public async Task<TwitchGetUsersResponse> GetUsersAsync(IEnumerable<string> names, CancellationToken cancellationToken = default)
+    public async Task<TwitchGetUsersResponse> GetUsersAsync(
+        IEnumerable<string>? ids = null,
+        IEnumerable<string>? names = null,
+        CancellationToken cancellationToken = default)
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            $"users?user_login={string.Join("&user_login=", names)}");
+        var uri = QueryHelpers.AddQueryString(
+            "users",
+            [
+                ..(ids?.Select(id => KeyValuePair.Create("id", id)) ?? []),
+                ..(names?.Select(name => KeyValuePair.Create("login", name)) ?? []),
+            ]);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<TwitchGetUsersResponse>(cancellationToken).ConfigureAwait(false))!;
+    }
+
+    public async Task<TwitchGetVideosResponse> GetVideosAsync(
+        IEnumerable<string> ids,
+        CancellationToken cancellationToken = default)
+    {
+        string uri = QueryHelpers.AddQueryString("videos", ids.Select(id => KeyValuePair.Create("id", id))!);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<TwitchGetVideosResponse>(cancellationToken).ConfigureAwait(false))!;
+    }
+
+    public async Task<TwitchGetStreamsResponse> GetStreamsAsync(
+        IEnumerable<string>? userIds = null,
+        IEnumerable<string>? userLogins = null,
+        IEnumerable<string>? gameIds = null,
+        string? type = null,
+        IEnumerable<string>? languages = null,
+        int? first = null,
+        string? before = null,
+        string? after = null,
+        CancellationToken cancellationToken = default)
+    {
+        var uri = QueryHelpers.AddQueryString(
+            "streams",
+            [
+                ..(userIds?.Select(id => KeyValuePair.Create("user_id", id)) ?? []),
+                ..(userLogins?.Select(login => KeyValuePair.Create("user_login", login)) ?? []),
+                ..(gameIds?.Select(id => KeyValuePair.Create("game_id", id)) ?? []),
+                KeyValuePair.Create("type", type),
+                ..(languages?.Select(language => KeyValuePair.Create("language", language)) ?? []),
+                KeyValuePair.Create("first", first?.ToString()),
+                KeyValuePair.Create("before", before),
+                KeyValuePair.Create("after", after),
+            ]);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<TwitchGetStreamsResponse>(cancellationToken).ConfigureAwait(false))!;
+    }
+
+    public async Task<TwitchGetUsersResponse> GetUsersAsync(
+        IEnumerable<string> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var uri = QueryHelpers.AddQueryString(
+            "channels",
+            ids.Select(id => KeyValuePair.Create("broadcaster_id", id))!);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<TwitchGetUsersResponse>(cancellationToken).ConfigureAwait(false))!;
+    }
+
+    public async Task<TwitchGetWebhooksResponse> GetEventSubSubscriptionsAsync(
+        string? after = null,
+        CancellationToken cancellationToken = default)
+    {
+        string uri = QueryHelpers.AddQueryString("eventsub/subscriptions", [KeyValuePair.Create("after", after)]);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<TwitchGetWebhooksResponse>(cancellationToken).ConfigureAwait(false))!;
+    }
+
+    public async Task<TwitchGetWebhooksResponse> CreateEventSubSubscriptionAsync(
+        TwitchWebhookRequest webhook,
+        CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "eventsub/subscriptions")
+        {
+            Content = JsonContent.Create(webhook)
+        };
+        using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new TwitchRequestException(
+                "Failed to create EventSub subscription.",
+                requestUri: response.RequestMessage!.RequestUri!,
+                requestContent: await response.RequestMessage!.Content!.ReadAsStringAsync(CancellationToken.None),
+                responseStatusCode: response.StatusCode,
+                responseContent: await response.Content.ReadAsStringAsync(CancellationToken.None));
+        }
+        return (await response.Content.ReadFromJsonAsync<TwitchGetWebhooksResponse>(cancellationToken).ConfigureAwait(false))!;
+    }
+
+    public async Task DeleteEventSubSubscriptionAsync(string id, CancellationToken cancellationToken = default)
+    {
+        var uri = QueryHelpers.AddQueryString("eventsub/subscriptions", "id", id);
+        using var request = new HttpRequestMessage(HttpMethod.Delete, uri);
+        using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new TwitchRequestException(
+                "Failed to delete EventSub subscription.",
+                requestUri: response.RequestMessage!.RequestUri!,
+                requestContent: await response.RequestMessage!.Content!.ReadAsStringAsync(CancellationToken.None),
+                responseStatusCode: response.StatusCode,
+                responseContent: await response.Content.ReadAsStringAsync(CancellationToken.None));
+        }
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
@@ -153,8 +263,10 @@ public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsM
                 await AuthenticateAsync(cancellationToken).ConfigureAwait(false);
             }
 
+            var token = _accessToken!;
             using var _2 = request;
-            request.Headers.Add("Authorization", $"Bearer {_accessToken!.AccessToken}");
+            request.Headers.Add("Authorization", $"Bearer {token.AccessToken}");
+            request.Headers.Add("Client-Id", token.ClientId);
 
             using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);

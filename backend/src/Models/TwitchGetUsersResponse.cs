@@ -11,8 +11,7 @@ namespace LiveStreamDVR.Api.Models
     public partial class TwitchUser
     {
         [JsonPropertyName("id")]
-        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString)]
-        public required long Id { get; set; }
+        public required string Id { get; set; }
 
         [JsonPropertyName("login")]
         public required string Login { get; set; }

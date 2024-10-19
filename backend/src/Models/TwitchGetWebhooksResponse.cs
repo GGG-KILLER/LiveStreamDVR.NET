@@ -50,8 +50,7 @@ public partial class TwitchWebhook
 public partial class TwitchWebhookCondition
 {
     [JsonPropertyName("broadcaster_user_id")]
-    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString)]
-    public long BroadcasterUserId { get; set; }
+    public required string BroadcasterUserId { get; set; }
 }
 
 public partial class TwitchWebhookTransport
