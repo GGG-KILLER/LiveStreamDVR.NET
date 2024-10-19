@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.Threading;
 
 namespace LiveStreamDVR.Api.Services;
 
-public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsMonitor<TwitchOptions> twitchOptionsMonitor)
+public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsMonitor<TwitchOptions> twitchOptionsMonitor) : ITwitchClient, IDisposable
 {
     private readonly AsyncReaderWriterLock _tokenLock = new(null);
     private TwitchAcessToken? _accessToken = null;
@@ -92,6 +92,12 @@ public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsM
         if (_accessToken is null || _accessToken.ExpirationDate <= DateTime.Now)
         {
             return false;
+        }
+
+        // Only actually call their API to check every hour.
+        if ((DateTime.Now - _lastTokenVerification).TotalMinutes <= 60)
+        {
+            return true;
         }
 
         await using var _1 = await _tokenLock.UpgradeableReadLockAsync(cancellationToken);
@@ -189,7 +195,7 @@ public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsM
         return (await response.Content.ReadFromJsonAsync<TwitchGetStreamsResponse>(cancellationToken).ConfigureAwait(false))!;
     }
 
-    public async Task<TwitchGetUsersResponse> GetUsersAsync(
+    public async Task<TwitchGetChannelInfoResponse> GetChannelsInfoAsync(
         IEnumerable<string> ids,
         CancellationToken cancellationToken = default)
     {
@@ -199,7 +205,7 @@ public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsM
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<TwitchGetUsersResponse>(cancellationToken).ConfigureAwait(false))!;
+        return (await response.Content.ReadFromJsonAsync<TwitchGetChannelInfoResponse>(cancellationToken).ConfigureAwait(false))!;
     }
 
     public async Task<TwitchGetWebhooksResponse> GetEventSubSubscriptionsAsync(
@@ -316,5 +322,10 @@ public sealed class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsM
 
         [JsonPropertyName("token_type")]
         public required string TokenType { get; init; }
+    }
+
+    public void Dispose()
+    {
+        _tokenLock.Dispose();
     }
 }

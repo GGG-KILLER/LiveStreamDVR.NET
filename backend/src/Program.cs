@@ -4,7 +4,6 @@ using LiveStreamDVR.Api.Models;
 using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
 
@@ -15,12 +14,7 @@ builder.Configuration.AddEnvironmentVariables(prefix: "DVR_");
 // Add services to the container.
 
 var basicSection = builder.Configuration.GetSection(BasicOptions.ConfigurationKey);
-var basicOptions = basicSection.Get<BasicOptions>();
-
-if (basicOptions is null)
-{
-    throw new InvalidOperationException("Missing Basic key on settings.");
-}
+var basicOptions = basicSection.Get<BasicOptions>() ?? throw new InvalidOperationException("Missing Basic key on settings.");
 
 builder.Services.Configure<BasicOptions>(basicSection);
 builder.Services.Configure<BinariesOptions>(builder.Configuration.GetSection(BinariesOptions.ConfigurationKey));
@@ -58,6 +52,7 @@ builder.Services.AddHttpClient("TwitchHelix", client =>
     client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
 });
 builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
+builder.Services.AddSingleton<ITwitchClient, TwitchClient>();
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {
     var twitchOptions = builder.Configuration.GetRequiredSection(TwitchOptions.ConfigurationKey).Get<TwitchOptions>()!;
