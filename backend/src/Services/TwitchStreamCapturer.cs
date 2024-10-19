@@ -31,7 +31,7 @@ public sealed class TwitchStreamCapturer(
                 _capturesInProgress.RemoveAll(task => task.IsCompleted);
 
                 logger.LogInformation("Starting to capture {Stream}", stream);
-                _capturesInProgress.Add(Capture(stream, stoppingToken));
+                _capturesInProgress.Add(CaptureAsync(stream, stoppingToken));
             }
             catch (Exception ex)
             {
@@ -43,7 +43,7 @@ public sealed class TwitchStreamCapturer(
         logger.LogInformation("Captures finished.");
     }
 
-    private async Task Capture(TwitchCapture stream, CancellationToken cancellationToken = default)
+    private async Task CaptureAsync(TwitchCapture stream, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -113,8 +113,8 @@ public sealed class TwitchStreamCapturer(
 
                 using var streamlinkStdout = new StreamWriter(Path.Combine(outputDir, $"capture_{stream.Login}_{stream.Id}.stdout.log"));
                 using var streamlinkStderr = new StreamWriter(Path.Combine(outputDir, $"capture_{stream.Login}_{stream.Id}.stderr.log"));
-                streamlinkStdout.WriteLine(streamlinkCommandLine);
-                streamlinkStderr.WriteLine(streamlinkCommandLine);
+                await streamlinkStdout.WriteLineAsync(streamlinkCommandLine);
+                await streamlinkStderr.WriteLineAsync(streamlinkCommandLine);
 
                 var streamlinkEx = new ProcessEx(streamlink);
                 streamlinkEx.OnStandardOutputLine += (_, line) =>
@@ -168,8 +168,8 @@ public sealed class TwitchStreamCapturer(
 
                 using var ffmpegStdout = new StreamWriter(Path.Combine(outputDir, $"remux_{stream.Login}_{stream.Id}.stdout.log"));
                 using var ffmpegStderr = new StreamWriter(Path.Combine(outputDir, $"remux_{stream.Login}_{stream.Id}.stderr.log"));
-                ffmpegStdout.WriteLine($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
-                ffmpegStderr.WriteLine($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
+                await ffmpegStdout.WriteLineAsync($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
+                await ffmpegStderr.WriteLineAsync($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
 
                 var ffmpegEx = new ProcessEx(ffmpeg);
                 ffmpegEx.OnStandardOutputLine += (_, line) =>
