@@ -37,7 +37,7 @@ public sealed class ProcessEx
                 _process.WaitForExitAsync(cancellationToken),
                 ReadLinesAsync(_process.StandardOutput.BaseStream, OnStandardOutputLine, cancellationToken),
                 ReadLinesAsync(_process.StandardError.BaseStream, OnStandardErrorLine, cancellationToken)
-            ]);
+            ]).ConfigureAwait(false);
 
             return true;
         }
@@ -57,7 +57,7 @@ public sealed class ProcessEx
         var reader = PipeReader.Create(stream, new StreamPipeReaderOptions(leaveOpen: true));
         while (true)
         {
-            var result = await reader.ReadAsync(cancellationToken);
+            var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             var buffer = result.Buffer;
 
             if (tryReadLine(ref buffer, out var line) || result.IsCompleted)
@@ -73,7 +73,7 @@ public sealed class ProcessEx
                 break;
             }
         }
-        await reader.CompleteAsync();
+        await reader.CompleteAsync().ConfigureAwait(false);
 
         static bool tryReadLine(ref ReadOnlySequence<byte> buffer, out ReadOnlySequence<byte> line)
         {

@@ -50,7 +50,7 @@ public sealed class TwitchEventSubService(
             {
                 ChannelUpdate @event = e.Notification.Event;
                 _channelStatus[@event.BroadcasterUserId] = @event;
-                await discordWebhook.NotifyChannelUpdatedAsync(@event);
+                await discordWebhook.NotifyChannelUpdatedAsync(@event).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -81,8 +81,8 @@ public sealed class TwitchEventSubService(
 
             try
             {
-                await streams.Writer.WriteAsync(stream);
-                await discordWebhook.NotifyStreamStartedAsync(stream);
+                await streams.Writer.WriteAsync(stream).ConfigureAwait(false);
+                await discordWebhook.NotifyStreamStartedAsync(stream).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -110,7 +110,7 @@ public sealed class TwitchEventSubService(
 
             try
             {
-                await discordWebhook.NotifyStreamStoppedAsync(stream);
+                await discordWebhook.NotifyStreamStoppedAsync(stream).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

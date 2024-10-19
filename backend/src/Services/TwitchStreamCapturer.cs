@@ -25,7 +25,7 @@ public sealed class TwitchStreamCapturer(
             try
             {
                 logger.LogInformation("Waiting for stream to start to capture...");
-                var stream = await streams.Reader.ReadAsync(stoppingToken);
+                var stream = await streams.Reader.ReadAsync(stoppingToken).ConfigureAwait(false);
 
                 logger.LogInformation("Cleaning up completed captures...");
                 _capturesInProgress.RemoveAll(task => task.IsCompleted);
@@ -39,7 +39,7 @@ public sealed class TwitchStreamCapturer(
             }
         }
         logger.LogInformation("TwitchStreamCapturer shutting down...");
-        await Task.WhenAll(_capturesInProgress);
+        await Task.WhenAll(_capturesInProgress).ConfigureAwait(false);
         logger.LogInformation("Captures finished.");
     }
 
@@ -127,7 +127,7 @@ public sealed class TwitchStreamCapturer(
                     streamlinkStderr.WriteLine(line);
                     streamlinkStderr.Flush();
                 };
-                await streamlinkEx.StartAndWaitAsync(cancellationToken);
+                await streamlinkEx.StartAndWaitAsync(cancellationToken).ConfigureAwait(false);
                 if (streamlink.ExitCode != 0)
                 {
                     logger.LogError("Failed to capture stream {Stream}. Exit code was {ExitCode}.", stream, streamlink.ExitCode);
@@ -182,7 +182,7 @@ public sealed class TwitchStreamCapturer(
                     ffmpegStderr.WriteLine(line);
                     ffmpegStderr.Flush();
                 };
-                await ffmpegEx.StartAndWaitAsync(cancellationToken);
+                await ffmpegEx.StartAndWaitAsync(cancellationToken).ConfigureAwait(false);
 
                 if (File.Exists(outputFileMp4) && OperatingSystem.IsLinux())
                 {

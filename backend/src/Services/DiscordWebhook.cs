@@ -30,7 +30,7 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
             {JsonSerializer.Serialize(channelUpdate, s_serializerOptions)}
             ```
             """
-        });
+        }).ConfigureAwait(false);
     }
 
     public async Task NotifyStreamStartedAsync(TwitchStream twitchStream)
@@ -45,7 +45,7 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
 
             https://twitch.tv/{twitchStream.Login}
             """
-        });
+        }).ConfigureAwait(false);
     }
 
     public async Task NotifyStreamStoppedAsync(TwitchStream twitchStream)
@@ -60,6 +60,6 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
 
             https://twitch.tv/{twitchStream.Login}
             """
-        });
+        }).ConfigureAwait(false);
     }
 }
