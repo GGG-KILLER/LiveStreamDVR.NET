@@ -11,7 +11,7 @@ namespace LiveStreamDVR.Api.Services;
 public sealed class TwitchStreamCapturer(
     ILogger<TwitchStreamCapturer> logger,
     IServiceProvider serviceProvider,
-    Channel<TwitchStream> streams,
+    Channel<TwitchCapture> streams,
     IOptionsMonitor<BinariesOptions> binariesOptionsMonitor,
     IOptionsMonitor<CaptureOptions> captureOptionsMonitor) : BackgroundService
 {
@@ -43,7 +43,7 @@ public sealed class TwitchStreamCapturer(
         logger.LogInformation("Captures finished.");
     }
 
-    private async Task Capture(TwitchStream stream, CancellationToken cancellationToken = default)
+    private async Task Capture(TwitchCapture stream, CancellationToken cancellationToken = default)
     {
         try
         {

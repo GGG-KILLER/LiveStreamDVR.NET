@@ -9,8 +9,8 @@ namespace LiveStreamDVR.Api.Services;
 public interface IDiscordWebhook
 {
     Task NotifyChannelUpdatedAsync(ChannelUpdate channelUpdate);
-    Task NotifyStreamStartedAsync(TwitchStream twitchStream);
-    Task NotifyStreamStoppedAsync(TwitchStream twitchStream);
+    Task NotifyStreamStartedAsync(TwitchCapture twitchStream);
+    Task NotifyStreamStoppedAsync(TwitchCapture twitchStream);
 }
 
 public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOptionsMonitor<DiscordOptions> discordOptions) : IDiscordWebhook
@@ -33,7 +33,7 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
         }).ConfigureAwait(false);
     }
 
-    public async Task NotifyStreamStartedAsync(TwitchStream twitchStream)
+    public async Task NotifyStreamStartedAsync(TwitchCapture twitchStream)
     {
         using var client = httpClientFactory.CreateClient();
         await client.PostAsJsonAsync(discordOptions.CurrentValue.WebhookUri, new DiscordWebhookMessage
@@ -48,7 +48,7 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
         }).ConfigureAwait(false);
     }
 
-    public async Task NotifyStreamStoppedAsync(TwitchStream twitchStream)
+    public async Task NotifyStreamStoppedAsync(TwitchCapture twitchStream)
     {
         using var client = httpClientFactory.CreateClient();
         await client.PostAsJsonAsync(discordOptions.CurrentValue.WebhookUri, new DiscordWebhookMessage

@@ -10,8 +10,8 @@ public sealed class TwitchController(ILogger<TwitchController> logger) : Control
 {
     [HttpPost("[action]")]
     public async ValueTask<IActionResult> ForceCaptureAsync(
-        [FromServices] Channel<TwitchStream> streams,
-        [FromBody] TwitchStream stream)
+        [FromServices] Channel<TwitchCapture> streams,
+        [FromBody] TwitchCapture stream)
     {
         logger.LogWarning("ForceCapture: Adding stream {Stream} to the queue.", stream);
         await streams.Writer.WriteAsync(stream).ConfigureAwait(false);

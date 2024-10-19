@@ -14,7 +14,7 @@ public sealed class TwitchEventSubService(
     ILogger<TwitchEventSubService> logger,
     IEventSubWebhooks eventSubWebhooks,
     IDiscordWebhook discordWebhook,
-    Channel<TwitchStream> streams)
+    Channel<TwitchCapture> streams)
     : IHostedService
 {
     private readonly ConcurrentDictionary<string, ChannelUpdate> _channelStatus = [];
@@ -70,7 +70,7 @@ public sealed class TwitchEventSubService(
                 streamTitle = update.Title;
             }
 
-            var stream = new TwitchStream
+            var stream = new TwitchCapture
             {
                 Id = @event.Id,
                 Login = @event.BroadcasterUserLogin,
@@ -101,7 +101,7 @@ public sealed class TwitchEventSubService(
             {
                 streamTitle = update.Title;
             }
-            var stream = new TwitchStream
+            var stream = new TwitchCapture
             {
                 Login = @event.BroadcasterUserLogin,
                 UserName = @event.BroadcasterUserName,

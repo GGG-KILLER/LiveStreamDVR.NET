@@ -65,7 +65,7 @@ builder.Services.AddTwitchLibEventSubWebhooks(opts =>
     opts.CallbackPath = "/hook/twitch";
     opts.Secret = twitchOptions.WebhookSecret!;
 });
-builder.Services.AddSingleton(Channel.CreateUnbounded<TwitchStream>(new UnboundedChannelOptions
+builder.Services.AddSingleton(Channel.CreateUnbounded<TwitchCapture>(new UnboundedChannelOptions
 {
     AllowSynchronousContinuations = false,
     SingleReader = true,

@@ -1,6 +1,6 @@
 namespace LiveStreamDVR.Api.Models;
 
-public sealed record TwitchStream
+public sealed record TwitchCapture
 {
     /// <summary>
     /// The id of the stream.
