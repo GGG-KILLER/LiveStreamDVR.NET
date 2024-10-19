@@ -14,6 +14,6 @@ public static class PathEx
             sanitized.Replace(ch, '_');
         }
 
-        return fileName.ToString();
+        return sanitized.ToString();
     }
 }
