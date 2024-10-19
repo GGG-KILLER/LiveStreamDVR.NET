@@ -24,15 +24,16 @@ public sealed class TwitchEventSubService(
         eventSubWebhooks.OnError += OnError;
         eventSubWebhooks.OnChannelUpdate += OnChannelUpdate;
         eventSubWebhooks.OnStreamOnline += OnStreamOnline;
-        eventSubWebhooks.OnStreamOffline += OnStreamOfflineAsync;
+        eventSubWebhooks.OnStreamOffline += OnStreamOffline;
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
         eventSubWebhooks.OnError -= OnError;
+        eventSubWebhooks.OnChannelUpdate -= OnChannelUpdate;
         eventSubWebhooks.OnStreamOnline -= OnStreamOnline;
-        eventSubWebhooks.OnStreamOffline -= OnStreamOfflineAsync;
+        eventSubWebhooks.OnStreamOffline -= OnStreamOffline;
         return Task.CompletedTask;
     }
 
@@ -43,60 +44,78 @@ public sealed class TwitchEventSubService(
 
     private void OnChannelUpdate(object? sender, ChannelUpdateArgs e)
     {
-        _channelStatus[e.Notification.Event.BroadcasterUserId] = e.Notification.Event;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                ChannelUpdate @event = e.Notification.Event;
+                _channelStatus[@event.BroadcasterUserId] = @event;
+                await discordWebhook.NotifyChannelUpdatedAsync(@event);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating channel status: {ChannelStatus}", e.Notification.Event);
+            }
+        });
     }
 
-    private async void OnStreamOnline(object? sender, StreamOnlineArgs e)
+    private void OnStreamOnline(object? sender, StreamOnlineArgs e)
     {
-        var @event = e.Notification.Event;
-        var streamTitle = "Unknown title";
-        if (_channelStatus.TryGetValue(@event.BroadcasterUserId, out var update))
+        _ = Task.Run(async () =>
         {
-            streamTitle = update.Title;
-        }
+            var @event = e.Notification.Event;
+            var streamTitle = "Unknown title";
+            if (_channelStatus.TryGetValue(@event.BroadcasterUserId, out var update))
+            {
+                streamTitle = update.Title;
+            }
 
-        var stream = new TwitchStream
-        {
-            Id = @event.Id,
-            Login = @event.BroadcasterUserLogin,
-            UserName = @event.BroadcasterUserName,
-            Title = streamTitle,
-            StartedAt = @event.StartedAt
-        };
+            var stream = new TwitchStream
+            {
+                Id = @event.Id,
+                Login = @event.BroadcasterUserLogin,
+                UserName = @event.BroadcasterUserName,
+                Title = streamTitle,
+                StartedAt = @event.StartedAt
+            };
 
-        try
-        {
-            await streams.Writer.WriteAsync(stream);
-            await discordWebhook.NotifyStreamStarted(stream);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error registering the start of the stream: {Stream}", stream);
-        }
+            try
+            {
+                await streams.Writer.WriteAsync(stream);
+                await discordWebhook.NotifyStreamStartedAsync(stream);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error registering the start of the stream: {Stream}", stream);
+            }
+        });
     }
 
-    private async void OnStreamOfflineAsync(object? sender, StreamOfflineArgs e)
+    private void OnStreamOffline(object? sender, StreamOfflineArgs e)
     {
-        var @event = e.Notification.Event;
-        var streamTitle = "Unknown title";
-        if (_channelStatus.TryGetValue(@event.BroadcasterUserId, out var update))
+        _ = Task.Run(async () =>
         {
-            streamTitle = update.Title;
-        }
-        var stream = new TwitchStream
-        {
-            Login = @event.BroadcasterUserLogin,
-            UserName = @event.BroadcasterUserName,
-            Title = streamTitle,
-        };
+            var @event = e.Notification.Event;
+            var streamTitle = "Unknown title";
+            if (_channelStatus.TryGetValue(@event.BroadcasterUserId, out var update))
+            {
+                streamTitle = update.Title;
+            }
+            var stream = new TwitchStream
+            {
+                Login = @event.BroadcasterUserLogin,
+                UserName = @event.BroadcasterUserName,
+                Title = streamTitle,
+            };
 
-        try
-        {
-            await discordWebhook.NotifyStreamStopped(stream);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error notifying the end of the stream: {Stream}", stream);
-        }
+            try
+            {
+                await discordWebhook.NotifyStreamStoppedAsync(stream);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error notifying the end of the stream: {Stream}", stream);
+            }
+        });
     }
 }

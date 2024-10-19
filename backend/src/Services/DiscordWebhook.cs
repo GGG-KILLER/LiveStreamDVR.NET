@@ -8,15 +8,16 @@ namespace LiveStreamDVR.Api.Services;
 
 public interface IDiscordWebhook
 {
-    Task NotifyStreamStarted(TwitchStream twitchStream);
-    Task NotifyStreamStopped(TwitchStream twitchStream);
+    Task NotifyChannelUpdatedAsync(ChannelUpdate channelUpdate);
+    Task NotifyStreamStartedAsync(TwitchStream twitchStream);
+    Task NotifyStreamStoppedAsync(TwitchStream twitchStream);
 }
 
 public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOptionsMonitor<DiscordOptions> discordOptions) : IDiscordWebhook
 {
     private static readonly JsonSerializerOptions s_serializerOptions = new() { WriteIndented = true, IndentSize = 2 };
 
-    public async Task NotifyChannelUpdated(ChannelUpdate channelUpdate)
+    public async Task NotifyChannelUpdatedAsync(ChannelUpdate channelUpdate)
     {
         using var client = httpClientFactory.CreateClient();
         await client.PostAsJsonAsync(discordOptions.CurrentValue.WebhookUri, new DiscordWebhookMessage
@@ -32,7 +33,7 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
         });
     }
 
-    public async Task NotifyStreamStarted(TwitchStream twitchStream)
+    public async Task NotifyStreamStartedAsync(TwitchStream twitchStream)
     {
         using var client = httpClientFactory.CreateClient();
         await client.PostAsJsonAsync(discordOptions.CurrentValue.WebhookUri, new DiscordWebhookMessage
@@ -47,7 +48,7 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
         });
     }
 
-    public async Task NotifyStreamStopped(TwitchStream twitchStream)
+    public async Task NotifyStreamStoppedAsync(TwitchStream twitchStream)
     {
         using var client = httpClientFactory.CreateClient();
         await client.PostAsJsonAsync(discordOptions.CurrentValue.WebhookUri, new DiscordWebhookMessage
