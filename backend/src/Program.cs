@@ -4,6 +4,7 @@ using LiveStreamDVR.Api.Models;
 using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
 
@@ -88,6 +89,7 @@ app.UseAuthorization();
 
 app.UseTwitchLibEventSubWebhooks();
 
-app.MapControllers();
+app.MapControllers()
+    .RequireAuthorization();
 
 app.Run();
