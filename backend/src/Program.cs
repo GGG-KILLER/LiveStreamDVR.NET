@@ -4,7 +4,7 @@ using LiveStreamDVR.Api.Models;
 using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
 
@@ -31,10 +31,12 @@ builder.Services.AddOpenApi(opts =>
     {
         opts.AddDocumentTransformer((document, context, cancellationToken) =>
         {
-            foreach (var server in document.Servers)
+            var newPaths = new OpenApiPaths();
+            foreach (var path in document.Paths)
             {
-                server.Url = $"{server.Url.TrimEnd('/')}/{basicOptions.PathPrefix.TrimStart('/')}";
+                newPaths.Add($"{basicOptions.PathPrefix.TrimEnd('/')}/{path.Key.TrimStart('/')}", path.Value);
             }
+            document.Paths = newPaths;
 
             return Task.CompletedTask;
         });
