@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LiveStreamDVR.Api.Configuration;
 
 public sealed class DiscordOptions
 {
     public const string ConfigurationKey = "Discord";
 
-    public string? WebhookUri { get; set; }
+    [Required]
+    public required Uri WebhookUri { get; set; }
 }

@@ -1,10 +1,10 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LiveStreamDVR.Api.Configuration;
+using LiveStreamDVR.Api.Helpers;
 using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
 
@@ -17,12 +17,67 @@ builder.Configuration.AddEnvironmentVariables(prefix: "DVR_");
 var basicSection = builder.Configuration.GetSection(BasicOptions.ConfigurationKey);
 var basicOptions = basicSection.Get<BasicOptions>() ?? throw new InvalidOperationException("Missing Basic key on settings.");
 
-builder.Services.Configure<BasicOptions>(basicSection);
-builder.Services.Configure<BinariesOptions>(builder.Configuration.GetSection(BinariesOptions.ConfigurationKey));
-builder.Services.Configure<CaptureOptions>(builder.Configuration.GetSection(CaptureOptions.ConfigurationKey));
-builder.Services.Configure<DiscordOptions>(builder.Configuration.GetSection(DiscordOptions.ConfigurationKey));
-builder.Services.Configure<TwitchOptions>(builder.Configuration.GetSection(TwitchOptions.ConfigurationKey));
-builder.Services.Configure<YoutubeOptions>(builder.Configuration.GetSection(YoutubeOptions.ConfigurationKey));
+builder.Services.AddOptions<BasicOptions>()
+                .Bind(basicSection)
+                .ValidateDataAnnotations()
+                .Validate(
+                    opts => opts.PublicUri is not null && opts.PublicUri.IsAbsoluteUri && opts.PublicUri.Scheme is "http" or "https",
+                    $"Configuration {BasicOptions.ConfigurationKey}.{nameof(BasicOptions.PublicUri)} must be a valid public URL.")
+                .Validate(
+                    opts => opts.PathPrefix is null || (opts.PathPrefix.StartsWith('/') && opts.PathPrefix.EndsWith('/')),
+                    $"Configuration {BasicOptions.ConfigurationKey}.{nameof(BasicOptions.PathPrefix)} must start and end with a slash.")
+                .ValidateOnStart();
+builder.Services.AddOptions<BinariesOptions>()
+                .BindConfiguration(BinariesOptions.ConfigurationKey)
+                .ValidateDataAnnotations()
+                .Validate(
+                    opts => !string.IsNullOrWhiteSpace(opts.StreamLinkPath)
+                            && PathEx.GetBinaryPath(opts.StreamLinkPath) is not null,
+                    $"Configuration {BinariesOptions.ConfigurationKey}.{nameof(BinariesOptions.StreamLinkPath)} must point to an existing streamlink binary.")
+                .Validate(
+                    opts => !string.IsNullOrWhiteSpace(opts.FfmpegPath)
+                            && PathEx.GetBinaryPath(opts.FfmpegPath) is not null,
+                    $"Configuration {BinariesOptions.ConfigurationKey}.{nameof(BinariesOptions.FfmpegPath)} must point to an existing ffmpeg binary.")
+                .ValidateOnStart();
+builder.Services.AddOptions<CaptureOptions>()
+                .BindConfiguration(CaptureOptions.ConfigurationKey)
+                .ValidateDataAnnotations()
+                .Validate(
+                    opts => !string.IsNullOrWhiteSpace(opts.OutputDirectory) && Directory.Exists(opts.OutputDirectory),
+                    $"Path on configuration {CaptureOptions.ConfigurationKey}.{nameof(CaptureOptions.OutputDirectory)} must exist and be a directory.")
+                .ValidateOnStart();
+builder.Services.AddOptions<DiscordOptions>()
+                .BindConfiguration(DiscordOptions.ConfigurationKey)
+                .ValidateDataAnnotations()
+                .Validate(
+                    opts =>
+                    {
+                        var uri = opts.WebhookUri;
+                        return uri is not null
+                            && uri.IsAbsoluteUri
+                            && uri.Scheme == "https"
+                            && uri.Host is "discord.com" or "ptb.discord.com" or "canary.discord.com"
+                            && uri.AbsolutePath.StartsWith("/api/webhooks/", StringComparison.Ordinal)
+                            && ulong.TryParse(
+                                uri.AbsolutePath.AsSpan()["/api/webhooks/".Length..uri.AbsolutePath.IndexOf('/', "/api/webhooks/".Length)],
+                                NumberStyles.None,
+                                CultureInfo.InvariantCulture,
+                                out _);
+                    },
+                    $"Configuration {DiscordOptions.ConfigurationKey}.{nameof(DiscordOptions.WebhookUri)} must be a valid discord webhook URL.")
+                .ValidateOnStart();
+builder.Services.AddOptions<TwitchOptions>()
+                .BindConfiguration(TwitchOptions.ConfigurationKey)
+                .ValidateDataAnnotations()
+                .Validate(
+                    opts => !string.IsNullOrWhiteSpace(opts.WebhookSecret) && opts.WebhookSecret.All(char.IsAscii),
+                    $"Configuration {TwitchOptions.ConfigurationKey}.{nameof(TwitchOptions.WebhookSecret)} must be ASCII.")
+                .ValidateOnStart();
+// TODO: Uncomment when YouTube capturing is implemented.
+// builder.Services.AddOptions<YoutubeOptions>()
+//                 .BindConfiguration(YoutubeOptions.ConfigurationKey)
+//                 .ValidateDataAnnotations()
+//                 .ValidateOnStart();
 
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>

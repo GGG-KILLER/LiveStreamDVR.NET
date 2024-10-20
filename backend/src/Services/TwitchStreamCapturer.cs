@@ -53,7 +53,7 @@ public sealed class TwitchStreamCapturer(
 
             Directory.CreateDirectory("logs");
 
-            var outputDir = Path.Combine(captureOptions.OutputDirectory!, PathEx.SanitizeFileName(stream.UserName));
+            var outputDir = Path.Combine(captureOptions.OutputDirectory, PathEx.SanitizeFileName(stream.UserName));
             var outputDirInfo = new DirectoryInfo(outputDir);
             if (!outputDirInfo.Exists)
             {

@@ -1,9 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LiveStreamDVR.Api.Configuration;
 
 public sealed class BasicOptions
 {
     public const string ConfigurationKey = "Basic";
 
-    public string? PublicUri { get; set; }
+    [Required]
+    public required Uri PublicUri { get; set; }
+
     public string? PathPrefix { get; set; }
 }
