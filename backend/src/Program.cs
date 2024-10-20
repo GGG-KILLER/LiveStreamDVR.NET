@@ -94,24 +94,11 @@ builder.Services.AddControllers()
     });
 builder.Services.AddOpenApi(opts =>
 {
-    if (!string.IsNullOrWhiteSpace(basicOptions.PathPrefix))
-    {
-        opts.AddDocumentTransformer((document, context, cancellationToken) =>
-        {
-            var newPaths = new OpenApiPaths();
-            foreach (var path in document.Paths)
-            {
-                newPaths.Add($"{basicOptions.PathPrefix.TrimEnd('/')}/{path.Key.TrimStart('/')}", path.Value);
-            }
-            document.Paths = newPaths;
-
-            return Task.CompletedTask;
-        });
-    }
+    opts.AddDocumentTransformer<AddPrefixToPathsTransformer>();
     opts.AddDocumentTransformer<AddOauthSecuritySchemeTransformer>();
 });
+builder.Services.AddAuthentication().AddJwtBearer();
 builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("TwitchOauth", client =>
