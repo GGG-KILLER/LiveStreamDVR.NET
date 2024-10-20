@@ -18,8 +18,9 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
         Uri uri,
         CancellationToken cancellationToken = default)
     {
-        if (uri.Scheme != "https"
-            || uri.Host != "www.twitch.tv"
+        if (!uri.IsAbsoluteUri
+            || uri.Scheme != "https"
+            || (uri.Host != "twitch.tv" && !uri.Host.EndsWith(".twitch.tv", StringComparison.Ordinal))
             || uri.PathAndQuery.StartsWith("/videos/", StringComparison.Ordinal))
         {
             return BadRequest(new ProblemDetails
@@ -30,9 +31,16 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
             });
         }
 
-        var name = uri.PathAndQuery["/".Length..];
-        if (name.Contains('?'))
-            name = name[..name.IndexOf('?')];
+        var name = uri.AbsolutePath["/".Length..];
+        if (name.Contains('/'))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid URI provided.",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = "URL must be in the format https://www.twitch.tv/user-login",
+            });
+        }
 
         var response = await twitchClient.GetStreamsAsync(userLogins: [name], cancellationToken: cancellationToken);
         if (response.Data.Count < 1)
@@ -81,8 +89,9 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetStreamsAsync(Uri uri, CancellationToken cancellationToken = default)
     {
-        if (uri.Scheme != "https"
-            || uri.Host != "www.twitch.tv"
+        if (!uri.IsAbsoluteUri
+            || uri.Scheme != "https"
+            || (uri.Host != "twitch.tv" && !uri.Host.EndsWith(".twitch.tv", StringComparison.Ordinal))
             || uri.PathAndQuery.StartsWith("/videos/", StringComparison.Ordinal))
         {
             return BadRequest(new ProblemDetails
@@ -93,9 +102,16 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
             });
         }
 
-        var name = uri.PathAndQuery["/".Length..];
-        if (name.Contains('?'))
-            name = name[..name.IndexOf('?')];
+        var name = uri.AbsolutePath["/".Length..];
+        if (name.Contains('/'))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid URI provided.",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = "URL must be in the format https://www.twitch.tv/user-login",
+            });
+        }
 
         var response = await twitchClient.GetStreamsAsync(userLogins: [name], cancellationToken: cancellationToken);
         return Ok(response);
@@ -107,21 +123,29 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetVideoAsync(Uri uri, CancellationToken cancellationToken = default)
     {
-        if (uri.Scheme != "https"
-            || uri.Host != "www.twitch.tv"
+        if (!uri.IsAbsoluteUri
+            || uri.Scheme != "https"
+            || (uri.Host != "twitch.tv" && !uri.Host.EndsWith(".twitch.tv", StringComparison.Ordinal))
             || !uri.PathAndQuery.StartsWith("/videos/", StringComparison.Ordinal))
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Invalid URI provided.",
                 Status = StatusCodes.Status400BadRequest,
-                Detail = "URL must be in the format https://www.twitch.tv/videos/0000000000",
+                Detail = "URL must be in the format https://www.twitch.tv/videos/00000000",
             });
         }
 
-        var id = uri.PathAndQuery["/videos/".Length..];
-        if (id.Contains('?'))
-            id = id[..id.IndexOf('?')];
+        var id = uri.AbsolutePath["/videos/".Length..];
+        if (id.Contains('/'))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid URI provided.",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = "URL must be in the format https://www.twitch.tv/videos/00000000",
+            });
+        }
 
         var response = await twitchClient.GetVideosAsync([id], cancellationToken);
         return Ok(response);
