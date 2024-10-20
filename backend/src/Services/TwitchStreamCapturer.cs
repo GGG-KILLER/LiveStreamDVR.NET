@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using System.Threading.Channels;
 using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Helpers;
 using LiveStreamDVR.Api.Models;
@@ -10,8 +9,7 @@ namespace LiveStreamDVR.Api.Services;
 
 public sealed class TwitchStreamCapturer(
     ILogger<TwitchStreamCapturer> logger,
-    IServiceProvider serviceProvider,
-    Channel<TwitchCapture> streams,
+    ICaptureManager captureManager,
     IOptionsMonitor<BinariesOptions> binariesOptionsMonitor,
     IOptionsMonitor<CaptureOptions> captureOptionsMonitor) : BackgroundService
 {
@@ -19,13 +17,13 @@ public sealed class TwitchStreamCapturer(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("TwitchStreamCapturer started with channel {Hash}.", $"{streams.GetHashCode():X4}");
+        logger.LogInformation("TwitchStreamCapturer started.");
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 logger.LogInformation("Waiting for stream to start to capture...");
-                var stream = await streams.Reader.ReadAsync(stoppingToken).ConfigureAwait(false);
+                var stream = await captureManager.GetNextCaptureInQueueAsync(stoppingToken).ConfigureAwait(false);
 
                 logger.LogInformation("Cleaning up completed captures...");
                 _capturesInProgress.RemoveAll(task => task.IsCompleted);
@@ -33,6 +31,7 @@ public sealed class TwitchStreamCapturer(
                 logger.LogInformation("Starting to capture {Stream}", stream);
                 _capturesInProgress.Add(CaptureAsync(stream, stoppingToken));
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error processing stream capture.");
@@ -40,7 +39,7 @@ public sealed class TwitchStreamCapturer(
         }
         logger.LogInformation("TwitchStreamCapturer shutting down...");
         await Task.WhenAll(_capturesInProgress).ConfigureAwait(false);
-        logger.LogInformation("Captures finished.");
+        logger.LogInformation("TwitchStreamCapturer shut down.");
     }
 
     private async Task CaptureAsync(TwitchCapture stream, CancellationToken cancellationToken = default)
@@ -50,7 +49,6 @@ public sealed class TwitchStreamCapturer(
             var binariesOptions = binariesOptionsMonitor.CurrentValue;
             var captureOptions = captureOptionsMonitor.CurrentValue;
 
-            await using var scope = serviceProvider.CreateAsyncScope();
             using var _1 = logger.BeginScope("Capture of Stream: {Stream}", stream);
 
             Directory.CreateDirectory("logs");

@@ -1,4 +1,3 @@
-using System.Threading.Channels;
 using LiveStreamDVR.Api.Models;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +13,7 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ForceCaptureAsync(
-        [FromServices] Channel<TwitchCapture> captures,
+        ICaptureManager captureManager,
         Uri uri,
         CancellationToken cancellationToken = default)
     {
@@ -78,7 +77,7 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
             StartedAt = twitchStream.StartedAt
         };
         logger.LogInformation("ForceCapture: Adding {Capture} to the queue.", capture);
-        await captures.Writer.WriteAsync(capture, cancellationToken).ConfigureAwait(false);
+        await captureManager.EnqueueCaptureAsync(capture, cancellationToken).ConfigureAwait(false);
 
         return Ok(capture);
     }

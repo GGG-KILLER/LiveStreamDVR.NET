@@ -1,6 +1,6 @@
-using System.Threading.Channels;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using LiveStreamDVR.Api.Configuration;
-using LiveStreamDVR.Api.Models;
 using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,7 +24,19 @@ builder.Services.Configure<DiscordOptions>(builder.Configuration.GetSection(Disc
 builder.Services.Configure<TwitchOptions>(builder.Configuration.GetSection(TwitchOptions.ConfigurationKey));
 builder.Services.Configure<YoutubeOptions>(builder.Configuration.GetSection(YoutubeOptions.ConfigurationKey));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+    {
+        opts.JsonSerializerOptions.AllowTrailingCommas = true;
+        opts.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        opts.JsonSerializerOptions.IndentSize = 2;
+        opts.JsonSerializerOptions.PropertyNameCaseInsensitive = false;
+        opts.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
+        opts.JsonSerializerOptions.RespectNullableAnnotations = true;
+        opts.JsonSerializerOptions.RespectRequiredConstructorParameters = true;
+        opts.JsonSerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+        opts.JsonSerializerOptions.WriteIndented = true;
+    });
 builder.Services.AddOpenApi(opts =>
 {
     if (!string.IsNullOrWhiteSpace(basicOptions.PathPrefix))
@@ -45,6 +57,7 @@ builder.Services.AddOpenApi(opts =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
+
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("TwitchOauth", client =>
 {
@@ -56,6 +69,8 @@ builder.Services.AddHttpClient("TwitchHelix", client =>
 });
 builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
 builder.Services.AddSingleton<ITwitchClient, TwitchClient>();
+builder.Services.AddSingleton<ICaptureManager, CaptureManager>();
+
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {
     var twitchOptions = builder.Configuration.GetRequiredSection(TwitchOptions.ConfigurationKey).Get<TwitchOptions>()!;
@@ -63,12 +78,6 @@ builder.Services.AddTwitchLibEventSubWebhooks(opts =>
     opts.CallbackPath = "/hook/twitch";
     opts.Secret = twitchOptions.WebhookSecret!;
 });
-builder.Services.AddSingleton(Channel.CreateUnbounded<TwitchCapture>(new UnboundedChannelOptions
-{
-    AllowSynchronousContinuations = false,
-    SingleReader = true,
-    SingleWriter = false,
-}));
 builder.Services.AddHostedService<TwitchEventSubService>();
 builder.Services.AddHostedService<TwitchStreamCapturer>();
 

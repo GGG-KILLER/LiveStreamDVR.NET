@@ -3,6 +3,7 @@ using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Models;
 using Microsoft.Extensions.Options;
 using TwitchLib.EventSub.Core.SubscriptionTypes.Channel;
+using TwitchLib.EventSub.Core.SubscriptionTypes.Stream;
 
 namespace LiveStreamDVR.Api.Services;
 
@@ -10,7 +11,7 @@ public interface IDiscordWebhook
 {
     Task NotifyChannelUpdatedAsync(ChannelUpdate channelUpdate);
     Task NotifyStreamStartedAsync(TwitchCapture twitchStream);
-    Task NotifyStreamStoppedAsync(TwitchCapture twitchStream);
+    Task NotifyStreamStoppedAsync(StreamOffline streamOffline);
 }
 
 public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOptionsMonitor<DiscordOptions> discordOptions) : IDiscordWebhook
@@ -48,17 +49,16 @@ public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOption
         }).ConfigureAwait(false);
     }
 
-    public async Task NotifyStreamStoppedAsync(TwitchCapture twitchStream)
+    public async Task NotifyStreamStoppedAsync(StreamOffline streamOffline)
     {
         using var client = httpClientFactory.CreateClient();
         await client.PostAsJsonAsync(discordOptions.CurrentValue.WebhookUri, new DiscordWebhookMessage
         {
             Username = "LiveStreamDVR",
             Content = $"""
-            **{twitchStream.UserName} has gone offline!**
-            {twitchStream.Title}
+            **{streamOffline.BroadcasterUserName} has gone offline!**
 
-            https://twitch.tv/{twitchStream.Login}
+            https://twitch.tv/{streamOffline.BroadcasterUserLogin}
             """
         }).ConfigureAwait(false);
     }

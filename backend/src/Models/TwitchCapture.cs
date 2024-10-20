@@ -5,7 +5,7 @@ public sealed record TwitchCapture
     /// <summary>
     /// The id of the stream.
     /// </summary>
-    public string? Id { get; init; }
+    public required string Id { get; init; }
 
     /// <summary>
     /// The broadcaster's user display name.
@@ -25,5 +25,5 @@ public sealed record TwitchCapture
     /// <summary>
     /// The timestamp at which the stream went online at.
     /// </summary>
-    public DateTimeOffset? StartedAt { get; init; }
+    public required DateTimeOffset StartedAt { get; init; }
 }

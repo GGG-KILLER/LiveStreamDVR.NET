@@ -1,6 +1,5 @@
 
 using System.Collections.Concurrent;
-using System.Threading.Channels;
 using LiveStreamDVR.Api.Models;
 using TwitchLib.EventSub.Core.SubscriptionTypes.Channel;
 using TwitchLib.EventSub.Webhooks.Core;
@@ -13,8 +12,8 @@ namespace LiveStreamDVR.Api.Services;
 public sealed class TwitchEventSubService(
     ILogger<TwitchEventSubService> logger,
     IEventSubWebhooks eventSubWebhooks,
-    IDiscordWebhook discordWebhook,
-    Channel<TwitchCapture> streams)
+    ICaptureManager captureManager,
+    IDiscordWebhook discordWebhook)
     : IHostedService
 {
     private readonly ConcurrentDictionary<string, ChannelUpdate> _channelStatus = [];
@@ -81,7 +80,7 @@ public sealed class TwitchEventSubService(
 
             try
             {
-                await streams.Writer.WriteAsync(stream).ConfigureAwait(false);
+                await captureManager.EnqueueCaptureAsync(stream).ConfigureAwait(false);
                 await discordWebhook.NotifyStreamStartedAsync(stream).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -101,20 +100,14 @@ public sealed class TwitchEventSubService(
             {
                 streamTitle = update.Title;
             }
-            var stream = new TwitchCapture
-            {
-                Login = @event.BroadcasterUserLogin,
-                UserName = @event.BroadcasterUserName,
-                Title = streamTitle,
-            };
 
             try
             {
-                await discordWebhook.NotifyStreamStoppedAsync(stream).ConfigureAwait(false);
+                await discordWebhook.NotifyStreamStoppedAsync(@event).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error notifying the end of the stream: {Stream}", stream);
+                logger.LogError(ex, "Error notifying the end of a stream: {Event}", @event);
             }
         });
     }
