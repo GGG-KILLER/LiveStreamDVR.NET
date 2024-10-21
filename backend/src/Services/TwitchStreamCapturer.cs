@@ -196,6 +196,8 @@ public sealed class TwitchStreamCapturer(
                     logger.LogError("Failed to remux {Stream}. Exit code was {ExitCode}.", stream, ffmpeg.ExitCode);
                     return;
                 }
+
+                File.Delete(outputFileTs);
             }
         }
         catch (Exception ex)
