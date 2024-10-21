@@ -134,6 +134,9 @@ app.MapScalarApiReference(opts =>
     {
         opts.WithOpenApiRoutePattern($"{basicOptions.PathPrefix.TrimEnd('/')}/openapi/{{documentName}}.json");
     }
+
+    // Attempt to disable proxy.
+    opts.ProxyUrl = "";
 });
 
 app.UseHttpsRedirection();
