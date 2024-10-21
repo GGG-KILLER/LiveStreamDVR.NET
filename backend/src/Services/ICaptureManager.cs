@@ -39,4 +39,11 @@ public interface ICaptureManager
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
     /// <returns>The next item in the queue to capture.</returns>
     ValueTask<TwitchCapture> GetNextCaptureInQueueAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Notifies that a stream has finished capturing.
+    /// </summary>
+    /// <param name="id">The ID of the stream being captured.</param>
+    /// <returns>Whether the stream was still on the list of streams being captured.</returns>
+    bool NotifyCaptureFinished(string id);
 }

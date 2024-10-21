@@ -204,5 +204,9 @@ public sealed class TwitchStreamCapturer(
         {
             logger.LogError(ex, "Error capturing stream {Stream}", stream);
         }
+        finally
+        {
+            captureManager.NotifyCaptureFinished(stream.Id);
+        }
     }
 }
