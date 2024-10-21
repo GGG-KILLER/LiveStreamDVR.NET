@@ -1,0 +1,15 @@
+using LiveStreamDVR.Api.Models;
+using LiveStreamDVR.Api.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace LiveStreamDVR.Api.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public sealed class CaptureController(ICaptureManager captureManager) : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType<IEnumerable<TwitchCapture>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult GetCaptures() => Ok(captureManager.Captures);
+}
