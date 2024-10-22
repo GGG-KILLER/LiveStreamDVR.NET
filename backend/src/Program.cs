@@ -19,8 +19,18 @@ using TwitchLib.EventSub.Webhooks.Extensions;
 // Setup state dir structure
 if (!Directory.Exists("config"))
     Directory.CreateDirectory("config");
+
+// Don't wanna expose configs to modification by anyone else.
+if (!OperatingSystem.IsWindows())
+    new DirectoryInfo("config").UnixFileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+
 if (!Directory.Exists("logs"))
     Directory.CreateDirectory("logs");
+
+// Don't want logs to be world-readable.
+if (!OperatingSystem.IsWindows())
+    new DirectoryInfo("logs").UnixFileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                                             | UnixFileMode.GroupRead | UnixFileMode.GroupExecute;
 
 var builder = WebApplication.CreateBuilder(args);
 
