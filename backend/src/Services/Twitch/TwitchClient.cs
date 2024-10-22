@@ -1,16 +1,15 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Exceptions;
 using LiveStreamDVR.Api.Models;
+using LiveStreamDVR.Api.Services.Storage;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Threading;
 
 namespace LiveStreamDVR.Api.Services.Twitch;
 
-public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsMonitor<TwitchOptions> twitchOptionsMonitor) : ITwitchClient, IDisposable
+public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, IConfigurationRepository configuration) : ITwitchClient, IDisposable
 {
     private readonly AsyncReaderWriterLock _tokenLock = new(null);
     private TwitchAcessToken? _accessToken = null;
@@ -27,18 +26,30 @@ public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, I
 
         await using var _1 = await _tokenLock.WriteLockAsync(cancellationToken);
 
-        // Could've obtained the token from another lock.
+        // Could've expired since we requested the lock.
         if (_accessToken?.ExpirationDate > DateTime.Now)
         {
             return;
         }
 
-        var options = twitchOptionsMonitor.CurrentValue;
+        var clientId = configuration.TwitchClientId;
+        var clientSecret = configuration.TwitchClientSecret;
+
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            throw new InvalidOperationException("Twitch Client ID is not set in configuration.");
+        }
+
+        if (string.IsNullOrWhiteSpace(clientSecret))
+        {
+            throw new InvalidOperationException("Twitch Client Secret is not set in configuration.");
+        }
+
         using var request = new HttpRequestMessage(HttpMethod.Post, "token")
         {
             Content = new FormUrlEncodedContent([
-                new KeyValuePair<string, string>("client_id", options.ClientId),
-                new KeyValuePair<string, string>("client_secret", options.ClientSecret),
+                new KeyValuePair<string, string>("client_id", clientId),
+                new KeyValuePair<string, string>("client_secret", clientSecret),
                 new KeyValuePair<string, string>("grant_type", "client_credentials"),
             ])
         };
@@ -50,7 +61,7 @@ public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, I
 
         _accessToken = (await response.Content.ReadFromJsonAsync(JsonContext.Default.TwitchAcessToken, cancellationToken)
                                               .ConfigureAwait(false))!;
-        _accessToken.ClientId = options.ClientId;
+        _accessToken.ClientId = clientId;
         _lastTokenVerification = DateTime.Now; // We just got the token, let's only validate on the next hour.
 #pragma warning restore CS8774
     }
@@ -66,7 +77,7 @@ public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, I
 
         await using var _1 = await _tokenLock.WriteLockAsync(cancellationToken);
 
-        // Lock could expire after the wait time, then we won't need to revoke it.
+        // Token could expire after the wait time, then we won't need to revoke it.
         if (token.ExpirationDate <= DateTime.Now)
         {
             return;
@@ -102,7 +113,7 @@ public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, I
 
         await using var _1 = await _tokenLock.UpgradeableReadLockAsync(cancellationToken);
 
-        // Could've obtained the token from another lock.
+        // Could've expired since we requested the lock.
         if (_accessToken is null || _accessToken.ExpirationDate <= DateTime.Now)
         {
             return false;
@@ -114,7 +125,6 @@ public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, I
             return true;
         }
 
-        var options = twitchOptionsMonitor.CurrentValue;
         using var request = new HttpRequestMessage(HttpMethod.Post, "validate")
         {
             Headers = {
