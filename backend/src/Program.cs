@@ -6,9 +6,21 @@ using LiveStreamDVR.Api.Helpers;
 using LiveStreamDVR.Api.OpenApi.Transformers;
 using LiveStreamDVR.Api.Services.Capture;
 using LiveStreamDVR.Api.Services.Discord;
+using LiveStreamDVR.Api.Services.Storage;
 using LiveStreamDVR.Api.Services.Twitch;
+using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
+using Tenray.ZoneTree;
+using Tenray.ZoneTree.Comparers;
+using Tenray.ZoneTree.Options;
+using Tenray.ZoneTree.Serializers;
 using TwitchLib.EventSub.Webhooks.Extensions;
+
+// Setup state dir structure
+if (!Directory.Exists("config"))
+    Directory.CreateDirectory("config");
+if (!Directory.Exists("logs"))
+    Directory.CreateDirectory("logs");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,16 +67,16 @@ builder.Services.AddOptions<DiscordOptions>()
                     opts =>
                     {
                         var uri = opts.WebhookUri;
-                        return uri is not null
-                            && uri.IsAbsoluteUri
-                            && uri.Scheme == "https"
-                            && uri.Host is "discord.com" or "ptb.discord.com" or "canary.discord.com"
-                            && uri.AbsolutePath.StartsWith("/api/webhooks/", StringComparison.Ordinal)
-                            && ulong.TryParse(
-                                uri.AbsolutePath.AsSpan()["/api/webhooks/".Length..uri.AbsolutePath.IndexOf('/', "/api/webhooks/".Length)],
-                                NumberStyles.None,
-                                CultureInfo.InvariantCulture,
-                                out _);
+                        return uri is null
+                            || (uri.IsAbsoluteUri
+                                && uri.Scheme == "https"
+                                && uri.Host is "discord.com" or "ptb.discord.com" or "canary.discord.com"
+                                && uri.AbsolutePath.StartsWith("/api/webhooks/", StringComparison.Ordinal)
+                                && ulong.TryParse(
+                                    uri.AbsolutePath.AsSpan()["/api/webhooks/".Length..uri.AbsolutePath.IndexOf('/', "/api/webhooks/".Length)],
+                                    NumberStyles.None,
+                                    CultureInfo.InvariantCulture,
+                                    out _));
                     },
                     $"Configuration {DiscordOptions.ConfigurationKey}.{nameof(DiscordOptions.WebhookUri)} must be a valid discord webhook URL.")
                 .ValidateOnStart();
@@ -115,6 +127,30 @@ builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
 builder.Services.AddSingleton<ITwitchClient, TwitchClient>();
 builder.Services.AddSingleton<ICaptureManager, CaptureManager>();
 
+var database = new ZoneTreeFactory<string, string>()
+    .SetDataDirectory("config")
+    .SetComparer(new StringOrdinalIgnoreCaseComparerAscending())
+    .SetKeySerializer(new Utf8StringSerializer())
+    .SetValueSerializer(new Utf8StringSerializer())
+    .ConfigureDiskSegmentOptions(opts =>
+    {
+        opts.CompressionMethod = CompressionMethod.Zstd;
+        opts.CompressionLevel = CompressionLevels.ZstdMax;
+    })
+    .ConfigureWriteAheadLogOptions(opts =>
+    {
+        // Don't want any risk of corruptions here.
+        opts.WriteAheadLogMode = WriteAheadLogMode.Sync;
+    })
+    .OpenOrCreate();
+
+var databaseMaintainer = database.CreateMaintainer();
+databaseMaintainer.EnableJobForCleaningInactiveCaches = true;
+
+builder.Services.AddSingleton(database);
+builder.Services.AddSingleton(databaseMaintainer);
+builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
+
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {
     var twitchOptions = builder.Configuration.GetRequiredSection(TwitchOptions.ConfigurationKey).Get<TwitchOptions>()!;
@@ -124,8 +160,18 @@ builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 });
 builder.Services.AddHostedService<TwitchEventSubService>();
 builder.Services.AddHostedService<TwitchStreamCapturer>();
+builder.Services.AddHostedService<ZoneTreeService>();
 
 var app = builder.Build();
+
+{
+    var captureOptionsSnapshot = app.Services.GetRequiredService<IOptionsSnapshot<CaptureOptions>>();
+    var discordOptionsSnapshot = app.Services.GetRequiredService<IOptionsSnapshot<DiscordOptions>>();
+    var twitchOptionsSnapshot = app.Services.GetRequiredService<IOptionsSnapshot<TwitchOptions>>();
+
+    var config = app.Services.GetRequiredService<IConfigurationRepository>();
+    config.InitializeFromConfiguration(captureOptionsSnapshot, discordOptionsSnapshot, twitchOptionsSnapshot);
+}
 
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
