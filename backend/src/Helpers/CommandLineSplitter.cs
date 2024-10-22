@@ -1,9 +1,16 @@
+using System.Text.RegularExpressions;
 using LinkDotNet.StringBuilder;
 
 namespace LiveStreamDVR.Api.Helpers;
 
-public static class CommandLineSplitter
+public static partial class CommandLineSplitter
 {
+    public static string JoinArguments(IEnumerable<string> arguments)
+    {
+        return string.Join(" ", arguments.Select(flag =>
+            NoEscapeNeededRegex().IsMatch(flag) ? flag : $"'{flag.Replace("'", "'\\''")}'"));
+    }
+
     public static string[] SplitArguments(string arguments)
     {
         var args = new List<string>();
@@ -77,4 +84,7 @@ public static class CommandLineSplitter
             return builder.ToString();
         }
     }
+
+    [GeneratedRegex(@"^[a-zA-Z0-9,._+:@%/-]+$")]
+    private static partial Regex NoEscapeNeededRegex();
 }

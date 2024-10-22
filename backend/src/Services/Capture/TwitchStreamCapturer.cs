@@ -3,6 +3,7 @@ using System.Text;
 using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Helpers;
 using LiveStreamDVR.Api.Models;
+using LiveStreamDVR.Api.Services.Storage;
 using Microsoft.Extensions.Options;
 
 namespace LiveStreamDVR.Api.Services.Capture;
@@ -11,7 +12,8 @@ public sealed class TwitchStreamCapturer(
     ILogger<TwitchStreamCapturer> logger,
     ICaptureManager captureManager,
     IOptionsMonitor<BinariesOptions> binariesOptionsMonitor,
-    IOptionsMonitor<CaptureOptions> captureOptionsMonitor) : BackgroundService
+    IOptionsMonitor<CaptureOptions> captureOptionsMonitor,
+    IConfigurationRepository configuration) : BackgroundService
 {
     private readonly List<Task> _capturesInProgress = [];
 
@@ -101,9 +103,10 @@ public sealed class TwitchStreamCapturer(
                         WorkingDirectory = outputDir,
                     }
                 };
-                if (captureOptions.ExtraStreamlinkFlags is not null && captureOptions.ExtraStreamlinkFlags.Length != 0)
+                var streamlinkExtraFlags = configuration.StreamlinkExtraCommandLine;
+                if (!string.IsNullOrWhiteSpace(streamlinkExtraFlags))
                 {
-                    foreach (var flag in captureOptions.ExtraStreamlinkFlags)
+                    foreach (var flag in CommandLineSplitter.SplitArguments(streamlinkExtraFlags))
                         streamlink.StartInfo.ArgumentList.Add(flag);
                 }
                 string streamlinkCommandLine = $"$ {streamlink.StartInfo.FileName} \"{string.Join("\", \"", streamlink.StartInfo.ArgumentList)}\"";
@@ -156,11 +159,14 @@ public sealed class TwitchStreamCapturer(
                         WorkingDirectory = outputDir,
                     }
                 };
-                if (captureOptions.ExtraFfmpegFlags is not null && captureOptions.ExtraFfmpegFlags.Length != 0)
+
+                var ffmpegExtraFlags = configuration.FfmpegExtraCommandLine;
+                if (!string.IsNullOrWhiteSpace(ffmpegExtraFlags))
                 {
-                    foreach (var flag in captureOptions.ExtraFfmpegFlags)
+                    foreach (var flag in CommandLineSplitter.SplitArguments(ffmpegExtraFlags))
                         ffmpeg.StartInfo.ArgumentList.Add(flag);
                 }
+
                 string ffmpegCommandLine = $"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"";
                 logger.LogInformation("Using command line {CommandLine}", ffmpegCommandLine);
 
