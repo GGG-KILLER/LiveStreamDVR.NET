@@ -68,7 +68,6 @@ public sealed class TwitchStreamCapturer(
                                            | UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
             }
 
-            Directory.CreateDirectory(outputDir);
             var outputFileTs = Path.Combine(outputDir, PathEx.SanitizeFileName($"{stream.StartedAt:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].ts"));
             var outputFileMp4 = Path.Combine(outputDir, PathEx.SanitizeFileName($"{stream.StartedAt:yyyy-MM-dd' 'HH:mm:ss} {stream.UserName} - {stream.Title} [{stream.Id}].mp4"));
 
@@ -109,11 +108,11 @@ public sealed class TwitchStreamCapturer(
                     foreach (var flag in CommandLineSplitter.SplitArguments(streamlinkExtraFlags))
                         streamlink.StartInfo.ArgumentList.Add(flag);
                 }
-                string streamlinkCommandLine = $"$ {streamlink.StartInfo.FileName} \"{string.Join("\", \"", streamlink.StartInfo.ArgumentList)}\"";
+                string streamlinkCommandLine = "$ " + CommandLineSplitter.JoinArguments([streamlink.StartInfo.FileName, .. streamlink.StartInfo.ArgumentList]);
                 logger.LogInformation("Using command line {CommandLine}", streamlinkCommandLine);
 
-                using var streamlinkStdout = new StreamWriter(Path.Combine(outputDir, $"capture_{stream.Login}_{stream.Id}.stdout.log"));
-                using var streamlinkStderr = new StreamWriter(Path.Combine(outputDir, $"capture_{stream.Login}_{stream.Id}.stderr.log"));
+                using var streamlinkStdout = new StreamWriter(Path.Combine("logs", $"capture_{stream.Login}_{stream.Id}.stdout.log"));
+                using var streamlinkStderr = new StreamWriter(Path.Combine("logs", $"capture_{stream.Login}_{stream.Id}.stderr.log"));
                 await streamlinkStdout.WriteLineAsync(streamlinkCommandLine);
                 await streamlinkStderr.WriteLineAsync(streamlinkCommandLine);
 
@@ -167,13 +166,13 @@ public sealed class TwitchStreamCapturer(
                         ffmpeg.StartInfo.ArgumentList.Add(flag);
                 }
 
-                string ffmpegCommandLine = $"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"";
+                string ffmpegCommandLine = "$ " + CommandLineSplitter.JoinArguments([ffmpeg.StartInfo.FileName, .. ffmpeg.StartInfo.ArgumentList]);
                 logger.LogInformation("Using command line {CommandLine}", ffmpegCommandLine);
 
-                using var ffmpegStdout = new StreamWriter(Path.Combine(outputDir, $"remux_{stream.Login}_{stream.Id}.stdout.log"));
-                using var ffmpegStderr = new StreamWriter(Path.Combine(outputDir, $"remux_{stream.Login}_{stream.Id}.stderr.log"));
-                await ffmpegStdout.WriteLineAsync($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
-                await ffmpegStderr.WriteLineAsync($"$ {ffmpeg.StartInfo.FileName} \"{string.Join("\", \"", ffmpeg.StartInfo.ArgumentList)}\"");
+                using var ffmpegStdout = new StreamWriter(Path.Combine("logs", $"remux_{stream.Login}_{stream.Id}.stdout.log"));
+                using var ffmpegStderr = new StreamWriter(Path.Combine("logs", $"remux_{stream.Login}_{stream.Id}.stderr.log"));
+                await ffmpegStdout.WriteLineAsync(ffmpegCommandLine);
+                await ffmpegStderr.WriteLineAsync(ffmpegCommandLine);
 
                 var ffmpegEx = new ProcessEx(ffmpeg);
                 ffmpegEx.OnStandardOutputLine += (_, line) =>
