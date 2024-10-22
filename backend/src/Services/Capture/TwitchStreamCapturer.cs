@@ -5,7 +5,7 @@ using LiveStreamDVR.Api.Helpers;
 using LiveStreamDVR.Api.Models;
 using Microsoft.Extensions.Options;
 
-namespace LiveStreamDVR.Api.Services;
+namespace LiveStreamDVR.Api.Services.Capture;
 
 public sealed class TwitchStreamCapturer(
     ILogger<TwitchStreamCapturer> logger,

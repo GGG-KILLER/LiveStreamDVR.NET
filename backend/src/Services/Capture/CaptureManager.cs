@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using LiveStreamDVR.Api.Models;
 
-namespace LiveStreamDVR.Api.Services;
+namespace LiveStreamDVR.Api.Services.Capture;
 
 public sealed class CaptureManager : ICaptureManager
 {

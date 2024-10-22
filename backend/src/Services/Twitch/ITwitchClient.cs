@@ -1,6 +1,6 @@
 using LiveStreamDVR.Api.Models;
 
-namespace LiveStreamDVR.Api.Services;
+namespace LiveStreamDVR.Api.Services.Twitch;
 
 public interface ITwitchClient
 {

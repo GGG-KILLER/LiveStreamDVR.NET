@@ -1,5 +1,6 @@
 using LiveStreamDVR.Api.Models;
-using LiveStreamDVR.Api.Services;
+using LiveStreamDVR.Api.Services.Capture;
+using LiveStreamDVR.Api.Services.Twitch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LiveStreamDVR.Api.Controllers;

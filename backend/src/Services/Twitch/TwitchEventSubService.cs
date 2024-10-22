@@ -1,13 +1,15 @@
 
 using System.Collections.Concurrent;
 using LiveStreamDVR.Api.Models;
+using LiveStreamDVR.Api.Services.Capture;
+using LiveStreamDVR.Api.Services.Discord;
 using TwitchLib.EventSub.Core.SubscriptionTypes.Channel;
 using TwitchLib.EventSub.Webhooks.Core;
 using TwitchLib.EventSub.Webhooks.Core.EventArgs;
 using TwitchLib.EventSub.Webhooks.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Webhooks.Core.EventArgs.Stream;
 
-namespace LiveStreamDVR.Api.Services;
+namespace LiveStreamDVR.Api.Services.Twitch;
 
 public sealed class TwitchEventSubService(
     ILogger<TwitchEventSubService> logger,

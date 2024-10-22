@@ -4,7 +4,9 @@ using System.Text.Json.Serialization;
 using LiveStreamDVR.Api.Configuration;
 using LiveStreamDVR.Api.Helpers;
 using LiveStreamDVR.Api.OpenApi.Transformers;
-using LiveStreamDVR.Api.Services;
+using LiveStreamDVR.Api.Services.Capture;
+using LiveStreamDVR.Api.Services.Discord;
+using LiveStreamDVR.Api.Services.Twitch;
 using Scalar.AspNetCore;
 using TwitchLib.EventSub.Webhooks.Extensions;
 

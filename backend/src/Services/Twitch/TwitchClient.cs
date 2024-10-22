@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Threading;
 
-namespace LiveStreamDVR.Api.Services;
+namespace LiveStreamDVR.Api.Services.Twitch;
 
 public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, IOptionsMonitor<TwitchOptions> twitchOptionsMonitor) : ITwitchClient, IDisposable
 {

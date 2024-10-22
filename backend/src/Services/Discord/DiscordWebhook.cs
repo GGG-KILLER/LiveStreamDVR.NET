@@ -5,14 +5,7 @@ using Microsoft.Extensions.Options;
 using TwitchLib.EventSub.Core.SubscriptionTypes.Channel;
 using TwitchLib.EventSub.Core.SubscriptionTypes.Stream;
 
-namespace LiveStreamDVR.Api.Services;
-
-public interface IDiscordWebhook
-{
-    Task NotifyChannelUpdatedAsync(ChannelUpdate channelUpdate);
-    Task NotifyStreamStartedAsync(TwitchCapture twitchStream);
-    Task NotifyStreamStoppedAsync(StreamOffline streamOffline);
-}
+namespace LiveStreamDVR.Api.Services.Discord;
 
 public sealed class DiscordWebhook(IHttpClientFactory httpClientFactory, IOptionsMonitor<DiscordOptions> discordOptions) : IDiscordWebhook
 {

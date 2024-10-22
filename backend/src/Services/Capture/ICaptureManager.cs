@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using LiveStreamDVR.Api.Models;
 
-namespace LiveStreamDVR.Api.Services;
+namespace LiveStreamDVR.Api.Services.Capture;
 
 public interface ICaptureManager
 {
