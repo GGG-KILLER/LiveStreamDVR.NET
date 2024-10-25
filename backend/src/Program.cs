@@ -156,6 +156,7 @@ databaseMaintainer.EnableJobForCleaningInactiveCaches = true;
 builder.Services.AddSingleton(database);
 builder.Services.AddSingleton(databaseMaintainer);
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
+builder.Services.AddSingleton<ITwitchRepository, TwitchRepository>();
 
 builder.Services.AddTwitchLibEventSubWebhooks(opts =>
 {
