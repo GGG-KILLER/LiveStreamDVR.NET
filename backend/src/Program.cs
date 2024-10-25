@@ -171,11 +171,12 @@ builder.Services.AddHostedService<ZoneTreeService>();
 var app = builder.Build();
 
 {
-    var captureOptionsSnapshot = app.Services.GetRequiredService<IOptionsSnapshot<CaptureOptions>>();
-    var discordOptionsSnapshot = app.Services.GetRequiredService<IOptionsSnapshot<DiscordOptions>>();
-    var twitchOptionsSnapshot = app.Services.GetRequiredService<IOptionsSnapshot<TwitchOptions>>();
+    using var scope = app.Services.CreateScope();
+    var captureOptionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<CaptureOptions>>();
+    var discordOptionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<DiscordOptions>>();
+    var twitchOptionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<TwitchOptions>>();
 
-    var config = app.Services.GetRequiredService<IConfigurationRepository>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfigurationRepository>();
     config.InitializeFromConfiguration(captureOptionsSnapshot, discordOptionsSnapshot, twitchOptionsSnapshot);
 }
 
