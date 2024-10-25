@@ -60,6 +60,7 @@ public sealed class TwitchStreamCapturer(
             {
                 outputDirInfo.Create();
             }
+
             if (OperatingSystem.IsLinux())
             {
                 outputDirInfo.UnixFileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute

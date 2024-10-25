@@ -126,13 +126,9 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("TwitchOauth", client =>
-{
-    client.BaseAddress = new Uri("https://id.twitch.tv/oauth2/");
-});
+    client.BaseAddress = new Uri("https://id.twitch.tv/oauth2/"));
 builder.Services.AddHttpClient("TwitchHelix", client =>
-{
-    client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
-});
+    client.BaseAddress = new Uri("https://api.twitch.tv/helix/"));
 builder.Services.AddSingleton<IDiscordWebhook, DiscordWebhook>();
 builder.Services.AddSingleton<ITwitchClient, TwitchClient>();
 builder.Services.AddSingleton<ICaptureManager, CaptureManager>();
@@ -187,14 +183,13 @@ var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference(opts =>
 {
-    opts.WithPreferredScheme("Bearer");
+    opts.WithCdnUrl("https://cdn.jsdelivr.net/npm/@scalar/api-reference")
+        .WithPreferredScheme("Bearer")
+        .WithProxyUrl("");
     if (!string.IsNullOrWhiteSpace(basicOptions.PathPrefix))
     {
-        opts.WithOpenApiRoutePattern($"{basicOptions.PathPrefix.TrimEnd('/')}/openapi/{{documentName}}.json");
+        opts.WithOpenApiRoutePattern($"/{basicOptions.PathPrefix.Trim('/')}/openapi/{{documentName}}.json");
     }
-
-    // Attempt to disable proxy.
-    opts.ProxyUrl = "";
 });
 
 app.UseHttpsRedirection();
