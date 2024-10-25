@@ -6,7 +6,7 @@ namespace LiveStreamDVR.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public sealed class CaptureController(ICaptureManager captureManager) : ControllerBase
+public sealed class CapturesController(ICaptureManager captureManager) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<IEnumerable<TwitchCapture>>(StatusCodes.Status200OK)]
