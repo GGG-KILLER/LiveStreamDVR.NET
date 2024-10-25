@@ -83,6 +83,29 @@ public sealed class TwitchController(ITwitchClient twitchClient, ILogger<TwitchC
         return Ok(capture);
     }
 
+    [HttpGet("Streamer/{nameOrId:required:regex(^([[a-zA-Z0-9_]]{{4,25}}|\\d+)$)}")]
+    [ProducesResponseType<TwitchUser>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStreamerAsync(string nameOrId, CancellationToken cancellationToken = default)
+    {
+        TwitchGetUsersResponse response;
+        if (long.TryParse(nameOrId, out _))
+        {
+            response = await twitchClient.GetUsersAsync(ids: [nameOrId], cancellationToken: cancellationToken);
+        }
+        else
+        {
+            response = await twitchClient.GetUsersAsync(names: [nameOrId], cancellationToken: cancellationToken);
+        }
+
+        if (response.Data.Count == 0)
+            return NotFound();
+        return Ok(response.Data[0]);
+    }
+
+
     [HttpGet("[action]")]
     [ProducesResponseType<TwitchGetStreamsResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
