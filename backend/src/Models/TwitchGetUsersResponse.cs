@@ -25,7 +25,7 @@ public sealed class TwitchUser
 
     public required long ViewCount { get; set; }
 
-    public required string Email { get; set; }
+    public string? Email { get; set; }
 
     public required DateTimeOffset CreatedAt { get; set; }
 }
