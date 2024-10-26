@@ -294,7 +294,6 @@ public sealed class TwitchController(
             Data = subscriptions.SelectMany(x => x.Data).ToList(),
             TotalCost = subscriptions.Sum(x => x.TotalCost),
             MaxTotalCost = subscriptions.Max(x => x.MaxTotalCost),
-            Pagination = new TwitchResponsePagination(),
         });
     }
 

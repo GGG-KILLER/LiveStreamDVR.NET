@@ -10,7 +10,7 @@ public sealed class TwitchGetWebhooksResponse
 
     public required long TotalCost { get; set; }
 
-    public required TwitchResponsePagination Pagination { get; set; }
+    public TwitchResponsePagination? Pagination { get; set; }
 }
 
 public sealed class TwitchWebhook
