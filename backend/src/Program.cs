@@ -45,11 +45,11 @@ builder.Services.AddOptions<BasicOptions>()
                 .Bind(basicSection)
                 .ValidateDataAnnotations()
                 .Validate(
-                    opts => opts.PublicUri is not null && opts.PublicUri.IsAbsoluteUri && opts.PublicUri.Scheme is "http" or "https",
-                    $"Configuration {BasicOptions.ConfigurationKey}.{nameof(BasicOptions.PublicUri)} must be a valid public URL.")
-                .Validate(
-                    opts => opts.PathPrefix is null || (opts.PathPrefix.StartsWith('/') && opts.PathPrefix.EndsWith('/')),
-                    $"Configuration {BasicOptions.ConfigurationKey}.{nameof(BasicOptions.PathPrefix)} must start and end with a slash.")
+                    opts => opts.PublicUri is not null
+                        && opts.PublicUri.IsAbsoluteUri
+                        && opts.PublicUri.Scheme is "http" or "https"
+                        && opts.PublicUri.AbsolutePath.EndsWith('/'),
+                    $"Configuration {BasicOptions.ConfigurationKey}.{nameof(BasicOptions.PublicUri)} must be a valid public URL and end with a slash.")
                 .ValidateOnStart();
 builder.Services.AddOptions<BinariesOptions>()
                 .BindConfiguration(BinariesOptions.ConfigurationKey)
@@ -188,9 +188,9 @@ app.MapScalarApiReference(opts =>
     opts.WithCdnUrl("https://cdn.jsdelivr.net/npm/@scalar/api-reference")
         .WithPreferredScheme("Bearer")
         .WithProxyUrl("");
-    if (!string.IsNullOrWhiteSpace(basicOptions.PathPrefix))
+    if (basicOptions.PublicUri.AbsolutePath != "/")
     {
-        opts.WithOpenApiRoutePattern($"/{basicOptions.PathPrefix.Trim('/')}/openapi/{{documentName}}.json");
+        opts.WithOpenApiRoutePattern($"{basicOptions.PublicUri.AbsolutePath}openapi/{{documentName}}.json");
     }
 });
 
