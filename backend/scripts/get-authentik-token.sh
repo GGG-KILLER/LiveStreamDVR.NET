@@ -20,6 +20,6 @@ oauth2c 'https://sso.shiro.lan/application/o/livestreamdvr/' \
     --response-mode query \
     --grant-type authorization_code \
     --auth-method none \
-    --scopes openid,profile \
+    --scopes openid \
     --pkce \
     --silent | jq --raw-output '.access_token'
