@@ -223,10 +223,20 @@ public sealed partial class TwitchClient(IHttpClientFactory httpClientFactory, I
     }
 
     public async Task<TwitchGetWebhooksResponse> GetEventSubSubscriptionsAsync(
+        string? status = null,
+        string? type = null,
+        string? userId = null,
         string? after = null,
         CancellationToken cancellationToken = default)
     {
-        string uri = QueryHelpers.AddQueryString("eventsub/subscriptions", [KeyValuePair.Create("after", after)]);
+        string uri = QueryHelpers.AddQueryString(
+            "eventsub/subscriptions",
+            [
+                KeyValuePair.Create("status", status),
+                KeyValuePair.Create("type", type),
+                KeyValuePair.Create("user_id", userId),
+                KeyValuePair.Create("after", after),
+            ]);
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();

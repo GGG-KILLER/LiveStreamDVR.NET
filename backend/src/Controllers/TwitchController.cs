@@ -177,7 +177,7 @@ public sealed class TwitchController(
         while (subscriptions.Pagination?.Cursor != null)
         {
             var temp = subscriptions;
-            subscriptions = await twitchClient.GetEventSubSubscriptionsAsync(subscriptions.Pagination.Cursor, cancellationToken);
+            subscriptions = await twitchClient.GetEventSubSubscriptionsAsync(after: subscriptions.Pagination.Cursor, cancellationToken: cancellationToken);
             subscriptions.Data.InsertRange(0, temp.Data);
         }
 
@@ -306,9 +306,6 @@ public sealed class TwitchController(
         [FromRoute] string nameOrId,
         CancellationToken cancellationToken = default)
     {
-        var basicOptions = basicOptionsSnapshot.Value;
-        var twitchOptions = twitchOptionsSnapshot.Value;
-
         string id;
         if (long.TryParse(nameOrId, out _))
         {
@@ -329,7 +326,19 @@ public sealed class TwitchController(
             id = user.Id;
         }
 
-        var subscriptions = await twitchClient.GetEventSubSubscriptionsAsync(cancellationToken: cancellationToken);
+        var subscriptions = await twitchClient.GetEventSubSubscriptionsAsync(
+            userId: id,
+            cancellationToken: cancellationToken);
+        while (subscriptions.Pagination?.Cursor != null)
+        {
+            var temp = subscriptions;
+            subscriptions = await twitchClient.GetEventSubSubscriptionsAsync(
+                userId: id,
+                after: subscriptions.Pagination.Cursor,
+                cancellationToken: cancellationToken);
+            subscriptions.Data.InsertRange(0, temp.Data);
+        }
+
         foreach (var subscription in subscriptions.Data)
         {
             try
