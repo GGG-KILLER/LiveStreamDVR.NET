@@ -8,6 +8,4 @@ public sealed class BasicOptions
 
     [Required]
     public required Uri PublicUri { get; set; }
-
-    public string? PathPrefix { get; set; }
 }
