@@ -5,8 +5,8 @@ namespace LiveStreamDVR.Api.Models;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(TwitchChannelUpdateWebhookRequest), typeDiscriminator: "channel.update")]
-[JsonDerivedType(typeof(TwitchStreamOnlineWebhookCondition), typeDiscriminator: "stream.online")]
-[JsonDerivedType(typeof(TwitchStreamOfflineWebhookCondition), typeDiscriminator: "stream.offline")]
+[JsonDerivedType(typeof(TwitchStreamOnlineWebhookRequest), typeDiscriminator: "stream.online")]
+[JsonDerivedType(typeof(TwitchStreamOfflineWebhookRequest), typeDiscriminator: "stream.offline")]
 public abstract class TwitchWebhookRequest
 {
     public required string Version { get; set; }
