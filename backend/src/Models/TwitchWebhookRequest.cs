@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace LiveStreamDVR.Api.Models;
@@ -15,6 +16,26 @@ public abstract class TwitchWebhookRequest
 
 public sealed class TwitchChannelUpdateWebhookRequest : TwitchWebhookRequest
 {
+    public TwitchChannelUpdateWebhookRequest()
+    {
+    }
+
+    [SetsRequiredMembers]
+    public TwitchChannelUpdateWebhookRequest(string streamerId, Uri callbackUri, string callbackSecret)
+    {
+        Version = "2";
+        Condition = new TwitchChannelUpdateWebhookCondition
+        {
+            BroadcasterUserId = streamerId
+        };
+        Transport = new TwitchWebhookRequestTransport
+        {
+            Method = "webhook",
+            Callback = callbackUri,
+            Secret = callbackSecret
+        };
+    }
+
     public required TwitchChannelUpdateWebhookCondition Condition { get; set; }
 }
 
@@ -25,6 +46,26 @@ public sealed class TwitchChannelUpdateWebhookCondition
 
 public sealed class TwitchStreamOnlineWebhookRequest : TwitchWebhookRequest
 {
+    public TwitchStreamOnlineWebhookRequest()
+    {
+    }
+
+    [SetsRequiredMembers]
+    public TwitchStreamOnlineWebhookRequest(string streamerId, Uri callbackUri, string callbackSecret)
+    {
+        Version = "1";
+        Condition = new TwitchStreamOnlineWebhookCondition
+        {
+            BroadcasterUserId = streamerId
+        };
+        Transport = new TwitchWebhookRequestTransport
+        {
+            Method = "webhook",
+            Callback = callbackUri,
+            Secret = callbackSecret
+        };
+    }
+
     public required TwitchStreamOnlineWebhookCondition Condition { get; set; }
 }
 
@@ -35,6 +76,26 @@ public sealed class TwitchStreamOnlineWebhookCondition
 
 public sealed class TwitchStreamOfflineWebhookRequest : TwitchWebhookRequest
 {
+    public TwitchStreamOfflineWebhookRequest()
+    {
+    }
+
+    [SetsRequiredMembers]
+    public TwitchStreamOfflineWebhookRequest(string streamerId, Uri callbackUri, string callbackSecret)
+    {
+        Version = "1";
+        Condition = new TwitchStreamOfflineWebhookCondition
+        {
+            BroadcasterUserId = streamerId
+        };
+        Transport = new TwitchWebhookRequestTransport
+        {
+            Method = "webhook",
+            Callback = callbackUri,
+            Secret = callbackSecret
+        };
+    }
+
     public required TwitchStreamOfflineWebhookCondition Condition { get; set; }
 }
 
